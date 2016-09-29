@@ -1,4 +1,5 @@
 use user::UserPath;
+use types::Type;
 
 #[derive(Debug)]
 pub struct Block(pub Vec<Symbol>);
@@ -18,7 +19,6 @@ pub enum Symbol {
 	CurlyBraced(Block),
 	Parenthesis(Block),
 	UserPath(UserPath),
-	Name(String),
 	Identifier(String),
 	Text(String),
 	// Draft(Block),
@@ -28,6 +28,17 @@ pub enum Symbol {
 }
 
 impl Symbol {
+	pub fn get_type(&self) -> Option<Type> {
+		match *self {
+			Symbol::Text(ref val) => Some(Type::Text(val.clone())),
+			Symbol::UserPath(ref val) => Some(Type::UserPath(val.clone())),
+			Symbol::Parenthesis(ref val) => {
+				Some(Type::Tuple(val.0.iter().map(|v|v.get_type().unwrap()).collect()))
+			},
+			_ => None
+		}
+	}
+
 	pub fn get_operator(&self) -> (bool, usize) {
 		match *self {
 			Symbol::Comma => (true, 1001),

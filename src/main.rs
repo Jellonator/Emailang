@@ -33,5 +33,10 @@ fn main() {
 
 	let instructions = p.parse_symbols(&symbols);
 	let mut inter = interpreter::Interpreter::new();
+
+	for inst in &instructions {
+		println!("{}", inst);
+	}
+
 	inter.run(&instructions);
 }

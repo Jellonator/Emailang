@@ -5,6 +5,7 @@ use instruction::Instruction;
 use user::*;
 use std::slice::Iter;
 use std::collections::HashMap;
+use types::Type;
 
 pub struct Parser {}
 
@@ -98,7 +99,8 @@ pub fn is_expression(symbols: &[&Symbol]) -> bool {
 	false
 }
 
-pub fn split_expression<'a>(symbols: &'a [&'a Symbol]) -> (&'a [&'a Symbol], &[&'a Symbol]) {
+pub fn split_expression<'a>(symbols: &'a [&'a Symbol])
+-> Option<(&'a [&'a Symbol], &'a Symbol, &'a [&'a Symbol])> {
 	let mut pos = symbols.len();
 	let mut p = 0;
 	for i in 0..pos {
@@ -109,7 +111,13 @@ pub fn split_expression<'a>(symbols: &'a [&'a Symbol]) -> (&'a [&'a Symbol], &[&
 		}
 	}
 
-	(&symbols[0..pos], &symbols[pos..])
+	if pos == symbols.len() {
+		None
+	} else {
+		Some((
+			&symbols[..pos], &symbols[pos], &symbols[pos+1..]
+		))
+	}
 }
 
 impl Parser {
@@ -209,6 +217,40 @@ impl Parser {
 		ret
 	}
 
+	pub fn parse_type(&self, symbols: &[&Symbol]) -> Type {
+		if is_expression(symbols) {
+			Type::Expression(Box::new(match self.parse_expression(symbols) {
+				Some(val) => val,
+				None => panic!("Expression is not a valid value.")
+			}))
+		} else if symbols.len() == 1 {
+			match symbols[0].get_type() {
+				Some (val) => val,
+				None => panic!("Symbol is not a valid value!")
+			}
+		} else {
+			panic!()
+		}
+	}
+
+	pub fn parse_expression(&self, symbols: &[&Symbol]) -> Option<Instruction> {
+		println!("Parsing expression {:?}", symbols);
+		if is_expression(symbols) {
+			let (pre, mid, post) = match split_expression(symbols) {
+				Some(val) => val,
+				None => panic!("Not actually an expression?")
+			};
+			match *mid {
+				Symbol::Arrow => {
+					Some(Instruction::MailTo(self.parse_type(pre), self.parse_type(post)))
+				},
+				_ => None
+			}
+		} else {
+			None
+		}
+	}
+
 	pub fn parse_symbols(&self, symbols: &[Symbol]) -> Vec<Instruction> {
 		let mut ret = Vec::new();
 		let mut symbols = symbols.iter();
@@ -242,11 +284,7 @@ impl Parser {
 				}
 			} else {
 				// expressions
-				if is_expression(&chunk) {
-					
-				} else {
-
-				}
+				self.parse_expression(&chunk);
 				continue;
 			};
 			ret.push(inst);

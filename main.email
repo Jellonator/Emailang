@@ -4,9 +4,5 @@
 !<hello@world.com>{
 	"a" {
 		("print", "Hello!") > <io@std.com>;
-		("print", "World!") > <io@std.com>;
 	}
 };
-
-"a" > <hello@world.com>;
-"a" > <hello@world.com>;

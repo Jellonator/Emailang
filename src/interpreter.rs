@@ -37,6 +37,7 @@ impl Interpreter {
 	}
 
 	pub fn mail(&mut self, mail: &Mail) {
+		println!("Sending mail {} to {:?}!", mail.subject, mail.to);
 		self.pending.push(mail.clone());
 	}
 
