@@ -1,19 +1,23 @@
 use user::UserPath;
 use types::Type;
+use error;
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct Block(pub Vec<Symbol>);
 
 /* Symbols:
  * !        - define
  * <a@b>    - user
  * "a"      - text
- * a        - name
+ * a        - identifier
  * {a;b;c;} - curlybraced
  * (a,b,c)  - parenthesis
+ * >        - arrow
+ * ,        - comma
+ * ;        - semicolon
 **/
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub enum Symbol {
 	Define,
 	CurlyBraced(Block),
@@ -25,6 +29,12 @@ pub enum Symbol {
 	Comma,
 	Arrow,
 	Semicolon
+}
+
+// #[derive(Clone)]
+pub struct SymbolDef {
+	pub errfactory: error::ErrorFactory,
+	pub symbol: Symbol
 }
 
 impl Symbol {

@@ -6,6 +6,7 @@ pub mod instruction;
 pub mod user;
 pub mod server;
 pub mod mail;
+pub mod error;
 
 use std::error::Error;
 use std::fs::File;

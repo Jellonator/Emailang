@@ -1,11 +1,12 @@
 use symbols;
-use symbols::Symbol;
+use symbols::{Symbol, SymbolDef};
 use std::str::Chars;
 use instruction::Instruction;
 use user::*;
 use std::slice::Iter;
 use std::collections::HashMap;
 use types::Type;
+use error;
 
 pub struct Parser {}
 
@@ -72,24 +73,13 @@ pub fn take_until_matched(chars: &mut Chars, begin: char, end: char, target_leve
 	ret
 }
 
-pub fn take_symbols_until_semicolon<'a>(symbols: &'a mut Iter<Symbol>) -> Vec<&'a Symbol> {
-	let mut ret = Vec::new();
-	loop {
-		let n = symbols.next();
-		match n {
-			None => break,
-			Some(val) => {
-				if let Symbol::Semicolon = *val {
-					break;
-				}
-				ret.push(val);
-			}
-		}
-	}
-	ret
+pub fn take_symbols_until_semicolon(symbols: &mut Iter<Symbol>) -> Vec<Symbol> {
+	symbols//take until a semicolon, and clone all of the symbols
+		.take_while(|n|match **n{Symbol::Semicolon => false, _=>true})
+		.map(|n|n.clone()).collect()
 }
 
-pub fn is_expression(symbols: &[&Symbol]) -> bool {
+pub fn is_expression(symbols: &[Symbol]) -> bool {
 	for s in symbols {
 		let (is_op, _) = s.get_operator();
 		if is_op {
@@ -99,8 +89,9 @@ pub fn is_expression(symbols: &[&Symbol]) -> bool {
 	false
 }
 
-pub fn split_expression<'a>(symbols: &'a [&'a Symbol])
--> Option<(&'a [&'a Symbol], &'a Symbol, &'a [&'a Symbol])> {
+// what a mess of a function definition
+pub fn split_expression(symbols: &[Symbol])
+-> Option<(&[Symbol], &Symbol, &[Symbol])> {
 	let mut pos = symbols.len();
 	let mut p = 0;
 	for i in 0..pos {
@@ -140,7 +131,7 @@ impl Parser {
 			let name = if let Symbol::Text(ref contents) = *res1.unwrap() {
 				contents
 			} else {
-				panic!();
+				panic!("{}");
 			};
 			let block = if let Symbol::CurlyBraced(ref contents) = *res2.unwrap() {
 				contents
@@ -217,7 +208,7 @@ impl Parser {
 		ret
 	}
 
-	pub fn parse_type(&self, symbols: &[&Symbol]) -> Type {
+	pub fn parse_type(&self, symbols: &[Symbol]) -> Type {
 		if is_expression(symbols) {
 			Type::Expression(Box::new(match self.parse_expression(symbols) {
 				Some(val) => val,
@@ -233,7 +224,7 @@ impl Parser {
 		}
 	}
 
-	pub fn parse_expression(&self, symbols: &[&Symbol]) -> Option<Instruction> {
+	pub fn parse_expression(&self, symbols: &[Symbol]) -> Option<Instruction> {
 		// println!("Parsing expression {:?}", symbols);
 		if is_expression(symbols) {
 			let (pre, mid, post) = match split_expression(symbols) {
@@ -260,14 +251,14 @@ impl Parser {
 				break;
 			}
 
-			let inst = if let Symbol::Define = *chunk[0] {
-				match *chunk[1] {
+			let inst = if let Symbol::Define = chunk[0] {
+				match chunk[1] {
 					Symbol::UserPath(ref path) => {
 						assert!(chunk.len() <= 3);
 						let block = if chunk.len() == 2 {
 							HashMap::new()
 						} else {
-							if let Symbol::CurlyBraced(ref block) = *chunk[2] {
+							if let Symbol::CurlyBraced(ref block) = chunk[2] {
 								self.parse_user_block(&block.0)
 							} else {
 								panic!()
