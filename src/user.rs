@@ -4,6 +4,8 @@ use instruction::Instruction;
 use std::collections::HashMap;
 use std::rc::Rc;
 use std::fmt;
+use types::Type;
+use environment::Environment;
 
 #[derive(Clone, Debug)]
 pub struct UserPath(pub String, pub String);
@@ -43,9 +45,16 @@ impl User {
 				(**b)(&mut inter, &mail);
 			},
 			UserType::Internal(ref v) => {
+				let mut env = Environment::new();
+				env.set("subject", Type::Text(mail.subject.clone()));
+				env.set("content", Type::Text(mail.message.clone()));
+				for i in 0..mail.attachments.len() {
+					env.set(&("attach".to_string() + &i.to_string()),
+						Type::Text(mail.attachments[i].clone()));
+				}
 				match v.get(&mail.subject) {
 					Some(ref ivec) => {
-						inter.run(&ivec);
+						inter.run(&ivec, &mut env);
 					},
 					None => {}
 				}

@@ -60,6 +60,7 @@ pub enum Symbol {
 	// Syntax
 	Comma,
 	Semicolon,
+	Receive(Box<SymbolDef>),
 	// Operators
 	Define,
 	Arrow,

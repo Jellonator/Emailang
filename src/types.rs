@@ -2,6 +2,7 @@ use user::UserPath;
 use instruction::Instruction;
 use interpreter::Interpreter;
 use mail::Draft;
+use environment::Environment;
 
 #[derive(Clone, Debug)]
 pub enum Type {
@@ -13,10 +14,10 @@ pub enum Type {
 }
 
 impl Type {
-	pub fn resolve(&self, mut inter: &mut Interpreter) -> Type {
+	pub fn resolve(&self, inter: &mut Interpreter, env: &mut Environment) -> Type {
 		match *self {
 			Type::Expression(ref exp) => {
-				exp.call(&mut inter)
+				exp.call(inter, env)
 			},
 			ref other => other.clone()
 		}
@@ -32,34 +33,36 @@ impl Type {
 		}
 	}
 
-	pub fn get_string(&self, mut inter: &mut Interpreter) -> Option<String> {
+	pub fn get_string(&self, inter: &mut Interpreter, env: &mut Environment) -> Option<String> {
 		match *self {
 			Type::Text(ref val) => Some(val.clone()),
-			Type::Expression(_) => self.resolve(&mut inter).get_string(&mut inter),
+			Type::Expression(_) => self.resolve(inter, env)
+				.get_string(inter, env),
 			_ => None
 		}
 	}
 
-	pub fn get_tuple(&self, mut inter: &mut Interpreter) -> Option<Vec<Type>> {
+	pub fn get_tuple(&self, inter: &mut Interpreter, env: &mut Environment) -> Option<Vec<Type>> {
 		match *self {
 			Type::Tuple(ref v) => Some(v.clone()),
-			Type::Expression(_) => self.resolve(&mut inter).get_tuple(&mut inter),
+			Type::Expression(_) => self.resolve(inter, env)
+				.get_tuple(inter, env),
 			_ => None
 		}
 	}
 
-	pub fn get_draft(&self, mut inter: &mut Interpreter) -> Option<Draft> {
+	pub fn get_draft(&self, inter: &mut Interpreter, env: &mut Environment) -> Option<Draft> {
 		match *self {
 			Type::Tuple(ref t) => {
 				Some(Draft {
 					subject: t.get(0).map(
-						|v|v.get_string(&mut inter).unwrap_or("".to_string())
+						|v|v.get_string(inter, env).unwrap_or("".to_string())
 					).unwrap_or("".to_string()),
 					message: t.get(1).map(
-						|v|v.get_string(&mut inter).unwrap_or("".to_string())
+						|v|v.get_string(inter, env).unwrap_or("".to_string())
 					).unwrap_or("".to_string()),
 					attachments: (2..).take_while(|v|*v<t.len()).map(
-						|v|t[v].get_string(&mut inter).unwrap_or("".to_string())
+						|v|t[v].get_string(inter, env).unwrap_or("".to_string())
 					).collect()
 				})
 			},
@@ -70,15 +73,17 @@ impl Type {
 					attachments: Vec::new()
 				})
 			},
-			Type::Expression(_) => self.resolve(&mut inter).get_draft(&mut inter),
+			Type::Expression(_) => self.resolve(inter, env)
+				.get_draft(inter, env),
 			_ => None
 		}
 	}
 
-	pub fn get_user(&self, mut inter: &mut Interpreter) -> Option<UserPath> {
+	pub fn get_user(&self, inter: &mut Interpreter, env: &mut Environment) -> Option<UserPath> {
 		match *self {
 			Type::UserPath(ref val) => Some(val.clone()),
-			Type::Expression(_) => self.resolve(&mut inter).get_user(&mut inter),
+			Type::Expression(_) => self.resolve(inter, env)
+				.get_user(inter, env),
 			_ => None
 		}
 	}

@@ -3,6 +3,7 @@ use instruction::Instruction;
 use server::Server;
 use mail::Mail;
 use user::*;
+use environment::Environment;
 
 pub struct Interpreter {
 	servers: Vec<Server>,
@@ -106,7 +107,7 @@ impl Interpreter {
 		return true;
 	}
 
-	pub fn run(&mut self, instructions: &Vec<Instruction>) {
+	pub fn run(&mut self, instructions: &Vec<Instruction>, env: &mut Environment) {
 		self.handle_pending();
 		let mut i = 0;
 		loop {
@@ -115,7 +116,7 @@ impl Interpreter {
 			}
 			let inst = &instructions[i];
 			i = i + 1;
-			inst.call(self);
+			inst.call(self, env);
 		}
 		while self.handle_pending() {}
 	}

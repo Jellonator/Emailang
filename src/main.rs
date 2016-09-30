@@ -7,6 +7,7 @@ pub mod user;
 pub mod server;
 pub mod mail;
 pub mod error;
+pub mod environment;
 
 use std::error::Error;
 use std::fs::File;
@@ -30,14 +31,9 @@ fn main() {
 
 	let p = parser::Parser::new();
 	let symbols = p.parse_string(&contents, path.to_str().unwrap());
-	// println!("{:?}", symbols);
 
 	let instructions = p.parse_symbols(&symbols);
 	let mut inter = interpreter::Interpreter::new();
 
-	// for inst in &instructions {
-	// 	println!("{}", inst);
-	// }
-
-	inter.run(&instructions);
+	inter.run(&instructions, &mut environment::Environment::new());
 }

@@ -3,7 +3,7 @@
 !<foo@world.com>;
 !<hello@world.com>{
 	"a" {
-		("print", "Hello", "World!") + ("How" + "Are" + "You?") > <io@std.com>;
+		("print", "Hello, ") > <io@std.com>;
 	}
 };
 
