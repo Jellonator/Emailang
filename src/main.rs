@@ -24,19 +24,19 @@ fn main() {
 	let mut contents = String::new();
 	match file.read_to_string(&mut contents) {
 		Err(why) => panic!("couldn't read {}: {}", display, why.description()),
-		Ok(_) => print!("{} contains:\n{}", display, contents),
+		Ok(_) => {}//print!("{} contains:\n{}", display, contents),
 	};
 
 	let p = parser::Parser::new();
 	let symbols = p.parse_string(&contents);
-	println!("{:?}", symbols);
+	// println!("{:?}", symbols);
 
 	let instructions = p.parse_symbols(&symbols);
 	let mut inter = interpreter::Interpreter::new();
 
-	for inst in &instructions {
-		println!("{}", inst);
-	}
+	// for inst in &instructions {
+	// 	println!("{}", inst);
+	// }
 
 	inter.run(&instructions);
 }

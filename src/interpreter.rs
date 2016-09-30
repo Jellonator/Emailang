@@ -19,9 +19,14 @@ impl Interpreter {
 			users_to_add: Vec::new(),
 			servers_to_add: Vec::new(),
 		};
-		inter.add_server("std");
-		inter.add_user("std",
-			&User::create_user_external("print", Box::new(|_, m| println!("{}", m.message)))
+		inter.add_server("std.com");
+		inter.add_user("std.com",
+			&User::create_user_external("io", Box::new(
+				|_, m| match m.subject.as_ref() {
+					"print" => println!("{}", m.message),
+					o => println!("Bad io function {}!", o)
+				}
+			))
 		);
 
 		inter.handle_pending();
@@ -37,7 +42,7 @@ impl Interpreter {
 	}
 
 	pub fn mail(&mut self, mail: &Mail) {
-		println!("Sending mail {} to {:?}!", mail.subject, mail.to);
+		// println!("Sending mail {} to {:?}!", mail.subject, mail.to);
 		self.pending.push(mail.clone());
 	}
 
@@ -51,8 +56,8 @@ impl Interpreter {
 	}
 
 	fn send_mail(&mut self, mail: &Mail) {
-		let tserver = &mail.to.0;
-		let tuser = &mail.to.1;
+		let tuser = &mail.to.0;
+		let tserver = &mail.to.1;
 
 		let selfhack = self as *mut Interpreter;
 		let selfhack = unsafe {&mut*selfhack};

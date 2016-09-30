@@ -5,7 +5,7 @@ use interpreter::Interpreter;
 use types::Type;
 use std::fmt;
 
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 pub enum Instruction {
 	CreateServer(String),
 	CreateUser(String, User),
@@ -38,6 +38,7 @@ impl Instruction {
 				inter.add_user(name, user);
 			},
 			Instruction::MailTo(ref draft, ref name) => {
+				// println!("{:?}", draft);
 				let tuple = draft.get_tuple(&mut inter).unwrap();
 				let target = name.get_user(&mut inter).unwrap();
 				let subject = tuple[0].get_string(&mut inter).unwrap();

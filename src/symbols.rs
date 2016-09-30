@@ -33,7 +33,14 @@ impl Symbol {
 			Symbol::Text(ref val) => Some(Type::Text(val.clone())),
 			Symbol::UserPath(ref val) => Some(Type::UserPath(val.clone())),
 			Symbol::Parenthesis(ref val) => {
-				Some(Type::Tuple(val.0.iter().map(|v|v.get_type().unwrap()).collect()))
+
+				// println!("Typeof {:?}", val.0);
+				let mut is_comma = false;
+				Some(Type::Tuple(val.0.iter().filter(
+					|_| {is_comma = !is_comma;is_comma}
+				).map(
+					|v| v.get_type().unwrap()
+				).collect()))
 			},
 			_ => None
 		}

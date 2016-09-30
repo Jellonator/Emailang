@@ -2,7 +2,7 @@ use user::UserPath;
 use instruction::Instruction;
 use interpreter::Interpreter;
 
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 pub enum Type {
 	Null,
 	Text(String),

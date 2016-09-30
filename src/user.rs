@@ -3,6 +3,7 @@ use mail::Mail;
 use instruction::Instruction;
 use std::collections::HashMap;
 use std::rc::Rc;
+use std::fmt;
 
 #[derive(Clone, Debug)]
 pub struct UserPath(pub String, pub String);
@@ -11,6 +12,12 @@ pub struct UserPath(pub String, pub String);
 pub struct User {
 	pub name: String,
 	func: UserType
+}
+
+impl fmt::Debug for User {
+	fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+		write!(f, "User {{name: {}}}", self.name)
+	}
 }
 
 impl User {
@@ -30,6 +37,7 @@ impl User {
 	}
 
 	pub fn send(&mut self, mut inter: &mut Interpreter, mail: &Mail) {
+		// println!("Received mail!");
 		match self.func {
 			UserType::External(ref mut b) => {
 				(**b)(&mut inter, &mail);

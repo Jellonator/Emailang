@@ -234,7 +234,7 @@ impl Parser {
 	}
 
 	pub fn parse_expression(&self, symbols: &[&Symbol]) -> Option<Instruction> {
-		println!("Parsing expression {:?}", symbols);
+		// println!("Parsing expression {:?}", symbols);
 		if is_expression(symbols) {
 			let (pre, mid, post) = match split_expression(symbols) {
 				Some(val) => val,
@@ -284,8 +284,7 @@ impl Parser {
 				}
 			} else {
 				// expressions
-				self.parse_expression(&chunk);
-				continue;
+				self.parse_expression(&chunk).unwrap()
 			};
 			ret.push(inst);
 		}

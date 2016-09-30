@@ -6,3 +6,5 @@
 		("print", "Hello!") > <io@std.com>;
 	}
 };
+
+("a", "b") > <hello@world.com>
