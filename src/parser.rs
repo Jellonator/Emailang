@@ -6,7 +6,7 @@ use user::*;
 use std::slice::Iter;
 use std::collections::HashMap;
 use types::Type;
-use error::{Error, ErrorFactory, ErrorType};
+use error::ErrorFactory;
 
 pub struct Parser {}
 
@@ -96,7 +96,7 @@ pub fn split_expression(symbols: &[SymbolDef])
 	let mut p = 0;
 	for i in 0..pos {
 		let (is_op, op_prec) = symbols[i].symbol.get_operator();
-		if is_op && op_prec > p {
+		if is_op && op_prec >= p {
 			pos = i;
 			p = op_prec;
 		}
@@ -155,18 +155,11 @@ impl Parser {
 			};
 
 			let s = match c {
-				'!' => {
-					Symbol::Define
-				},
-				',' => {
-					Symbol::Comma
-				},
-				';' => {
-					Symbol::Semicolon
-				},
-				'>' => {
-					Symbol::Arrow
-				},
+				'!' => Symbol::Define,
+				',' => Symbol::Comma,
+				';' => Symbol::Semicolon,
+				'>' => Symbol::Arrow,
+				'+' => Symbol::Addition,
 				'<' => {
 					let path = take_until(&mut chars, '>');
 					let pos = path.find('@').unwrap();
@@ -236,12 +229,12 @@ impl Parser {
 				None => panic!("Expression is not a valid value.")
 			}))
 		} else if symbols.len() == 1 {
-			match symbols[0].symbol.get_type() {
+			match symbols[0].symbol.get_type(self) {
 				Some (val) => val,
 				None => panic!("Symbol is not a valid value!")
 			}
 		} else {
-			panic!()
+			Type::Null
 		}
 	}
 
@@ -252,10 +245,11 @@ impl Parser {
 				Some(val) => val,
 				None => panic!("Not actually an expression?")
 			};
+			let preval = self.parse_type(pre);
+			let postval = self.parse_type(post);
 			match mid.symbol {
-				Symbol::Arrow => {
-					Some(Instruction::MailTo(self.parse_type(pre), self.parse_type(post)))
-				},
+				Symbol::Arrow => Some(Instruction::MailTo(preval, postval)),
+				Symbol::Addition => Some(Instruction::Concatenate(preval, postval)),
 				_ => None
 			}
 		} else {

@@ -22,6 +22,16 @@ impl Type {
 		}
 	}
 
+	pub fn get_typename(&self) -> &'static str {
+		match *self {
+			Type::Null => "null",
+			Type::Text(_) => "text",
+			Type::Tuple(_) => "tuple",
+			Type::UserPath(_) => "user",
+			Type::Expression(_) => "expression"
+		}
+	}
+
 	pub fn get_string(&self, mut inter: &mut Interpreter) -> Option<String> {
 		match *self {
 			Type::Text(ref val) => Some(val.clone()),
@@ -47,13 +57,17 @@ impl Type {
 					).unwrap_or("".to_string()),
 					message: t.get(1).map(
 						|v|v.get_string(&mut inter).unwrap_or("".to_string())
-					).unwrap_or("".to_string())
+					).unwrap_or("".to_string()),
+					attachments: (2..).take_while(|v|*v<t.len()).map(
+						|v|t[v].get_string(&mut inter).unwrap_or("".to_string())
+					).collect()
 				})
 			},
 			Type::Text(ref val) => {
 				Some(Draft {
 					subject: val.to_string(),
-					message: "".to_string()
+					message: "".to_string(),
+					attachments: Vec::new()
 				})
 			},
 			Type::Expression(_) => self.resolve(&mut inter).get_draft(&mut inter),

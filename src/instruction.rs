@@ -9,7 +9,8 @@ use std::fmt;
 pub enum Instruction {
 	CreateServer(String),
 	CreateUser(String, User),
-	MailTo(Type, Type)
+	MailTo(Type, Type),
+	Concatenate(Type, Type),
 }
 
 impl fmt::Display for Instruction {
@@ -24,6 +25,9 @@ impl fmt::Display for Instruction {
 			Instruction::MailTo(_, _) => {
 				write!(f, "Send mail")
 			},
+			Instruction::Concatenate(_, _) => {
+				write!(f, "Concatenate two strings")
+			}
 		}
 	}
 }
@@ -38,19 +42,43 @@ impl Instruction {
 				inter.add_user(name, user);
 			},
 			Instruction::MailTo(ref draft, ref name) => {
-				// println!("{:?}", draft);
-				// let tuple = draft.get_tuple(&mut inter).unwrap();
 				let d = draft.get_draft(&mut inter).unwrap();
 				let target = name.get_user(&mut inter).unwrap();
-				// let subject = tuple[0].get_string(&mut inter).unwrap();
-				// let message = tuple[1].get_string(&mut inter).unwrap();
 
 				inter.mail(&Mail {
 					subject: d.subject,
 					message: d.message,
-					to: target
+					attachments: d.attachments.clone(),
+					to: target,
 				});
 				return draft.clone();
+			},
+			Instruction::Concatenate(ref lval, ref rval) => {
+				let lstr = lval.get_string(&mut inter);
+				let rstr = rval.get_string(&mut inter);
+				match (lstr, rstr) {
+					(Some(ref lstringval), Some(ref rstringval)) => {
+						return Type::Text(lstringval.clone() + rstringval);
+					},
+					(None, Some(_)) => {
+						let mut tleft = lval.get_tuple(&mut inter).unwrap();
+						tleft.push(rval.clone());
+						return Type::Tuple(tleft);
+					},
+					(Some(_), None) => {
+						let mut tright = rval.get_tuple(&mut inter).unwrap();
+						let mut tleft:Vec<Type> = Vec::new();
+						tleft.push(lval.clone());
+						tleft.append(&mut tright);
+						return Type::Tuple(tleft);
+					},
+					(None, None) => {
+						let mut tleft = lval.get_tuple(&mut inter).unwrap();
+						let mut tright = rval.get_tuple(&mut inter).unwrap();
+						tleft.append(&mut tright);
+						return Type::Tuple(tleft);
+					},
+				}
 			}
 		}
 		Type::Null
