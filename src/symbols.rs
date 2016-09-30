@@ -2,8 +2,8 @@ use user::UserPath;
 use types::Type;
 use error;
 
-#[derive(Debug, Clone)]
-pub struct Block(pub Vec<Symbol>);
+#[derive(Clone)]
+pub struct Block(pub Vec<SymbolDef>);
 
 /* Symbols:
  * !        - define
@@ -17,7 +17,7 @@ pub struct Block(pub Vec<Symbol>);
  * ;        - semicolon
 **/
 
-#[derive(Debug, Clone)]
+#[derive(Clone)]
 pub enum Symbol {
 	Define,
 	CurlyBraced(Block),
@@ -31,7 +31,7 @@ pub enum Symbol {
 	Semicolon
 }
 
-// #[derive(Clone)]
+#[derive(Clone)]
 pub struct SymbolDef {
 	pub errfactory: error::ErrorFactory,
 	pub symbol: Symbol
@@ -49,7 +49,7 @@ impl Symbol {
 				Some(Type::Tuple(val.0.iter().filter(
 					|_| {is_comma = !is_comma;is_comma}
 				).map(
-					|v| v.get_type().unwrap()
+					|v| v.symbol.get_type().unwrap()
 				).collect()))
 			},
 			_ => None

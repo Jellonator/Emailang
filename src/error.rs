@@ -1,5 +1,6 @@
 use std::fmt;
 
+#[derive(Clone)]
 pub struct ErrorFactory {
 	pub line: usize,
 	pub file: String,
@@ -20,6 +21,10 @@ impl ErrorFactory {
 			line: self.line,
 			file: self.file.clone()
 		}
+	}
+
+	pub fn throw(&self, errtype: ErrorType, reason: String) -> ! {
+		panic!("{}", self.gen_error(errtype, reason))
 	}
 }
 

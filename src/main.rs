@@ -29,7 +29,7 @@ fn main() {
 	};
 
 	let p = parser::Parser::new();
-	let symbols = p.parse_string(&contents);
+	let symbols = p.parse_string(&contents, path.to_str().unwrap());
 	// println!("{:?}", symbols);
 
 	let instructions = p.parse_symbols(&symbols);

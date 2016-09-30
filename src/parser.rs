@@ -6,7 +6,7 @@ use user::*;
 use std::slice::Iter;
 use std::collections::HashMap;
 use types::Type;
-use error;
+use error::{Error, ErrorFactory, ErrorType};
 
 pub struct Parser {}
 
@@ -73,15 +73,15 @@ pub fn take_until_matched(chars: &mut Chars, begin: char, end: char, target_leve
 	ret
 }
 
-pub fn take_symbols_until_semicolon(symbols: &mut Iter<Symbol>) -> Vec<Symbol> {
+pub fn take_symbols_until_semicolon(symbols: &mut Iter<SymbolDef>) -> Vec<SymbolDef> {
 	symbols//take until a semicolon, and clone all of the symbols
-		.take_while(|n|match **n{Symbol::Semicolon => false, _=>true})
+		.take_while(|n|match n.symbol{Symbol::Semicolon => false, _=>true})
 		.map(|n|n.clone()).collect()
 }
 
-pub fn is_expression(symbols: &[Symbol]) -> bool {
+pub fn is_expression(symbols: &[SymbolDef]) -> bool {
 	for s in symbols {
-		let (is_op, _) = s.get_operator();
+		let (is_op, _) = s.symbol.get_operator();
 		if is_op {
 			return true;
 		}
@@ -90,12 +90,12 @@ pub fn is_expression(symbols: &[Symbol]) -> bool {
 }
 
 // what a mess of a function definition
-pub fn split_expression(symbols: &[Symbol])
--> Option<(&[Symbol], &Symbol, &[Symbol])> {
+pub fn split_expression(symbols: &[SymbolDef])
+-> Option<(&[SymbolDef], &SymbolDef, &[SymbolDef])> {
 	let mut pos = symbols.len();
 	let mut p = 0;
 	for i in 0..pos {
-		let (is_op, op_prec) = symbols[i].get_operator();
+		let (is_op, op_prec) = symbols[i].symbol.get_operator();
 		if is_op && op_prec > p {
 			pos = i;
 			p = op_prec;
@@ -116,7 +116,7 @@ impl Parser {
 		Parser {}
 	}
 
-	fn parse_user_block(&self, block: &[Symbol]) -> HashMap<String, Vec<Instruction>> {
+	fn parse_user_block(&self, block: &[SymbolDef]) -> HashMap<String, Vec<Instruction>> {
 		let mut ret = HashMap::new();
 		let mut symbols = block.iter();
 		loop {
@@ -128,12 +128,12 @@ impl Parser {
 					break;
 				}
 			}
-			let name = if let Symbol::Text(ref contents) = *res1.unwrap() {
+			let name = if let Symbol::Text(ref contents) = res1.unwrap().symbol {
 				contents
 			} else {
 				panic!("{}");
 			};
-			let block = if let Symbol::CurlyBraced(ref contents) = *res2.unwrap() {
+			let block = if let Symbol::CurlyBraced(ref contents) = res2.unwrap().symbol {
 				contents
 			} else {
 				panic!();
@@ -143,10 +143,11 @@ impl Parser {
 		ret
 	}
 
-	pub fn parse_string(&self, code:&str) -> Vec<Symbol> {
+	pub fn parse_string(&self, code: &str, fname: &str) -> Vec<SymbolDef> {
 		let mut ret = Vec::new();
 		let mut chars = code.chars();
 		let mut text = String::new();
+		let mut line = 1;
 		loop {
 			let c = match chars.next() {
 				Some(val) => val,
@@ -174,11 +175,11 @@ impl Parser {
 				},
 				'{' => {
 					let block = take_until_matched(&mut chars, '{', '}', 0);
-					Symbol::CurlyBraced(symbols::Block(self.parse_string(&block)))
+					Symbol::CurlyBraced(symbols::Block(self.parse_string(&block, fname)))
 				},
 				'(' => {
 					let block = take_until_matched(&mut chars, '(', ')', 0);
-					Symbol::Parenthesis(symbols::Block(self.parse_string(&block)))
+					Symbol::Parenthesis(symbols::Block(self.parse_string(&block, fname)))
 				},
 				'"' => {
 					Symbol::Text(take_until_unescaped(&mut chars, '"'))
@@ -188,7 +189,9 @@ impl Parser {
 					continue;
 				},
 				other => {
-					if other.is_alphanumeric() || ['.', '@', '_'].contains(&other) {
+					if other == '\n' {
+						line += 1;
+					} else if other.is_alphanumeric() || ['.', '@', '_'].contains(&other) {
 						text.push(other);
 					} else if !other.is_whitespace() {
 						panic!("{} is not a valid character!", other);
@@ -197,25 +200,43 @@ impl Parser {
 				}
 			};
 			if text.len() > 0 {
-				ret.push(Symbol::Identifier(text));
+				ret.push(SymbolDef{
+					symbol: Symbol::Identifier(text),
+					errfactory: ErrorFactory {
+						line: line,
+						file: fname.to_string()
+					}
+				});
 				text = String::new();
 			}
-			ret.push(s);
+			ret.push(SymbolDef{
+				symbol: s,
+				errfactory: ErrorFactory {
+					line: line,
+					file: fname.to_string()
+				}
+			});
 		}
 		if text.len() > 0 {
-			ret.push(Symbol::Identifier(text));
+			ret.push(SymbolDef{
+				symbol: Symbol::Identifier(text),
+				errfactory: ErrorFactory {
+					line: line,
+					file: fname.to_string()
+				}
+			});
 		}
 		ret
 	}
 
-	pub fn parse_type(&self, symbols: &[Symbol]) -> Type {
+	pub fn parse_type(&self, symbols: &[SymbolDef]) -> Type {
 		if is_expression(symbols) {
 			Type::Expression(Box::new(match self.parse_expression(symbols) {
 				Some(val) => val,
 				None => panic!("Expression is not a valid value.")
 			}))
 		} else if symbols.len() == 1 {
-			match symbols[0].get_type() {
+			match symbols[0].symbol.get_type() {
 				Some (val) => val,
 				None => panic!("Symbol is not a valid value!")
 			}
@@ -224,14 +245,14 @@ impl Parser {
 		}
 	}
 
-	pub fn parse_expression(&self, symbols: &[Symbol]) -> Option<Instruction> {
+	pub fn parse_expression(&self, symbols: &[SymbolDef]) -> Option<Instruction> {
 		// println!("Parsing expression {:?}", symbols);
 		if is_expression(symbols) {
 			let (pre, mid, post) = match split_expression(symbols) {
 				Some(val) => val,
 				None => panic!("Not actually an expression?")
 			};
-			match *mid {
+			match mid.symbol {
 				Symbol::Arrow => {
 					Some(Instruction::MailTo(self.parse_type(pre), self.parse_type(post)))
 				},
@@ -242,7 +263,7 @@ impl Parser {
 		}
 	}
 
-	pub fn parse_symbols(&self, symbols: &[Symbol]) -> Vec<Instruction> {
+	pub fn parse_symbols(&self, symbols: &[SymbolDef]) -> Vec<Instruction> {
 		let mut ret = Vec::new();
 		let mut symbols = symbols.iter();
 		loop {
@@ -251,14 +272,14 @@ impl Parser {
 				break;
 			}
 
-			let inst = if let Symbol::Define = chunk[0] {
-				match chunk[1] {
+			let inst = if let Symbol::Define = chunk[0].symbol {
+				match chunk[1].symbol {
 					Symbol::UserPath(ref path) => {
 						assert!(chunk.len() <= 3);
 						let block = if chunk.len() == 2 {
 							HashMap::new()
 						} else {
-							if let Symbol::CurlyBraced(ref block) = chunk[2] {
+							if let Symbol::CurlyBraced(ref block) = chunk[2].symbol {
 								self.parse_user_block(&block.0)
 							} else {
 								panic!()
@@ -282,7 +303,7 @@ impl Parser {
 		ret
 	}
 
-	pub fn parse(&self, code: &str) -> Vec<Instruction> {
-		self.parse_symbols(&self.parse_string(&code))
+	pub fn parse(&self, code: &str, fname: &str) -> Vec<Instruction> {
+		self.parse_symbols(&self.parse_string(&code, &fname))
 	}
 }
