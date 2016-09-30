@@ -5,6 +5,10 @@
 	"a" {
 		("print", "Hello!") > <io@std.com>;
 	}
+	"" {
+		("print", "World!") > <io@std.com>;
+	}
 };
 
-("a", "b") > <hello@world.com>
+"a" > <hello@world.com>;
+() > <hello@world.com>

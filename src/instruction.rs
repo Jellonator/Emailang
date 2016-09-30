@@ -39,13 +39,15 @@ impl Instruction {
 			},
 			Instruction::MailTo(ref draft, ref name) => {
 				// println!("{:?}", draft);
-				let tuple = draft.get_tuple(&mut inter).unwrap();
+				// let tuple = draft.get_tuple(&mut inter).unwrap();
+				let d = draft.get_draft(&mut inter).unwrap();
 				let target = name.get_user(&mut inter).unwrap();
-				let subject = tuple[0].get_string(&mut inter).unwrap();
-				let message = tuple[1].get_string(&mut inter).unwrap();
+				// let subject = tuple[0].get_string(&mut inter).unwrap();
+				// let message = tuple[1].get_string(&mut inter).unwrap();
+
 				inter.mail(&Mail {
-					subject: subject,
-					message: message,
+					subject: d.subject,
+					message: d.message,
 					to: target
 				});
 				return draft.clone();
