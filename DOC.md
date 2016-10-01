@@ -31,6 +31,45 @@ the identifiers in the environment, e.g. `@("message", "subject")` will evaluate
 to `(email message, email subject)`. Note that `@content` and `@"content"` are
 the same, as well as `@(content, subject)` and `@("content", "subject")`.
 
+### Standard Domain
+The standard domain, `std.com`, contains many useful users who can manage
+important functions.
+
+#### Input/Output
+The user `<io@std.com>` contains functions for input and output.
+
+##### Print
+`print` - prints out the given message and all given attachments, separated by
+a space.
+
+#### Looping
+The user `<loop@std.com>` contains functions for looping.
+
+##### Iterate
+`iterate` - Iterates through all attachments. For every attachment given, it
+will send an email back to the sender with the same subject as the message that
+was received.
+
+Example:
+```
+!bar;
+!<foo@bar> {
+	"start" {
+		("iterate", "each") + @content + @attachments > <loop@std.com>;
+	}
+	"each" {
+		("print", @content) > <io@std.com>;
+	}
+};
+("start", "A", "B", "C") > <foo@bar>;
+```
+Outputs:
+```
+A
+B
+C
+```
+
 ### Internals
 In general, the following set of operations are carried out every frame:
 

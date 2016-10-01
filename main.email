@@ -1,12 +1,10 @@
-!servername.com;
-!<username@servername.com>{
-	"foo" {
-		("print", "Received mail:") + @(content,) > <io@std.com>
+!bar;
+!<foo@bar> {
+	"start" {
+		("iterate", "loop") + @content + @attachments > <loop@std.com>;
 	}
-	"bar" {
-		("print", "Received classified information!") > <io@std.com>
+	"loop" {
+		("print", @content) > <io@std.com>;
 	}
 };
-("foo", "Have a great day!") > <username@servername.com>;
-("bar", "Important document", "Nuclear launch code: 12345") > <username@servername.com>;
-("foo", "How was your weekend?") > <username@servername.com>;
+("start", "A", "B", "C") > <foo@bar>;

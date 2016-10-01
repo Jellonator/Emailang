@@ -6,6 +6,7 @@ use std::rc::Rc;
 use std::fmt;
 use types::Type;
 use environment::Environment;
+use server::Server;
 
 #[derive(Clone, Debug)]
 pub struct UserPath(pub String, pub String);
@@ -38,20 +39,25 @@ impl User {
 		}
 	}
 
-	pub fn send(&mut self, mut inter: &mut Interpreter, mail: &Mail) {
+	pub fn send(&mut self, mut inter: &mut Interpreter, mail: &Mail, server: &Server) {
 		// println!("Received mail!");
 		match self.func {
 			UserType::External(ref mut b) => {
 				(**b)(&mut inter, &mail);
 			},
 			UserType::Internal(ref v) => {
-				let mut env = Environment::new();
+				let mut env = Environment::new(&self.name, &server.name);
 				env.set("subject", Type::Text(mail.subject.clone()));
 				env.set("content", Type::Text(mail.message.clone()));
 				for i in 0..mail.attachments.len() {
 					env.set(&("attach".to_string() + &i.to_string()),
 						Type::Text(mail.attachments[i].clone()));
 				}
+				env.set("attachments", Type::Tuple(mail.attachments
+					.iter()
+					.map(|v|Type::Text(v.clone()))
+					.collect()
+				));
 				match v.get(&mail.subject) {
 					Some(ref ivec) => {
 						inter.run(&ivec, &mut env);

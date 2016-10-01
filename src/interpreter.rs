@@ -21,6 +21,8 @@ impl Interpreter {
 			servers_to_add: Vec::new(),
 		};
 		inter.add_server("std.com");
+
+		// IO Functions
 		inter.add_user("std.com",
 			&User::create_user_external("io", Box::new(
 				|_, m| match m.subject.as_ref() {
@@ -32,6 +34,26 @@ impl Interpreter {
 						print!("\n");
 					},
 					o => println!("Bad io function {}!", o)
+				}
+			))
+		);
+
+		// Loop Constructs
+		inter.add_user("std.com",
+			&User::create_user_external("loop", Box::new(
+				|inter, m| match m.subject.as_ref() {
+					"iterate" => { // Iterate through all attachments
+						for a in &m.attachments {
+							inter.send_mail(&Mail {
+								subject: m.message.clone(),
+								message: a.clone(),
+								attachments: Vec::new(),
+								to: m.from.clone(),
+								from: UserPath(String::new(), String::new())
+							})
+						}
+					},
+					o => println!("Bad loop function {}!", o)
 				}
 			))
 		);
@@ -73,13 +95,16 @@ impl Interpreter {
 			Some(val) => val,
 			None => return
 		};
+
+		let servhack = serv as *const Server;
+		let servhack = unsafe {&*servhack};
 		let mut user = match serv.get_user_mut(&tuser) {
 			Some(val) => val,
 			None => return
 		};
 
 		// Just a note that theoretically this should be safe
-		user.send(selfhack/*huehuehue*/, &mail);
+		user.send(selfhack/*huehuehue*/, &mail, &servhack);
 	}
 
 	pub fn handle_pending(&mut self) -> bool {

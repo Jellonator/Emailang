@@ -4,7 +4,7 @@ use user::UserPath;
 pub struct Mail {
 	pub subject: String,
 	pub message: String,
-	// pub from: UserPath,
+	pub from: UserPath,
 	pub to: UserPath,
 	pub attachments: Vec<String>
 }

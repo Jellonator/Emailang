@@ -128,10 +128,10 @@ this into our user:
 ```
 !<username@servername.com>{
 	"foo" {
-		("print", "Received mail:", @content) > <io@std.com>
+		("print", "Received mail:", @content) > <io@std.com>;
 	}
 	"bar" {
-		("print", "Received classified information!") > <io@std.com>
+		("print", "Received classified information!") > <io@std.com>;
 	}
 };
 ```
@@ -146,10 +146,10 @@ Our final code will now look like this:
 !servername.com;
 !<username@servername.com>{
 	"foo" {
-		("print", "Received mail:", @content) > <io@std.com>
+		("print", "Received mail:", @content) > <io@std.com>;
 	}
 	"bar" {
-		("print", "Received classified information!") > <io@std.com>
+		("print", "Received classified information!") > <io@std.com>;
 	}
 };
 ("foo", "Have a great day!") > <username@servername.com>;

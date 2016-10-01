@@ -26,7 +26,7 @@ fn main() {
 	let mut contents = String::new();
 	match file.read_to_string(&mut contents) {
 		Err(why) => panic!("couldn't read {}: {}", display, why.description()),
-		Ok(_) => {}//print!("{} contains:\n{}", display, contents),
+		Ok(_) => {}
 	};
 
 	let p = parser::Parser::new();
@@ -35,5 +35,5 @@ fn main() {
 	let instructions = p.parse_symbols(&symbols);
 	let mut inter = interpreter::Interpreter::new();
 
-	inter.run(&instructions, &mut environment::Environment::new());
+	inter.run(&instructions, &mut environment::Environment::new_anon());
 }
