@@ -1,6 +1,6 @@
 use std::fmt;
 
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 pub struct ErrorFactory {
 	pub line: usize,
 	pub file: String,

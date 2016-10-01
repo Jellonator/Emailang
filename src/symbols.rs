@@ -1,7 +1,9 @@
 use user::UserPath;
 use types::Type;
 use error;
+use parser;
 use parser::Parser;
+use std::fmt;
 
 #[derive(Clone)]
 pub struct Block(pub Vec<SymbolDef>);
@@ -73,30 +75,50 @@ pub struct SymbolDef {
 	pub symbol: Symbol
 }
 
+impl fmt::Debug for SymbolDef {
+	fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+		write!(f, "{}", match self.symbol {
+			Symbol::CurlyBraced(_) => "CurlyBraced",
+			Symbol::Parenthesis(_) => "Parenthesis",
+			Symbol::UserPath(_) => "Userpath",
+			Symbol::Identifier(_) => "Identifier",
+			Symbol::Text(_) => "Text",
+			Symbol::Comma => "Comma",
+			Symbol::Semicolon => "Semicolon",
+			Symbol::Receive(_) => "Receiver",
+			Symbol::Define => "Define",
+			Symbol::Arrow => "Arrow",
+			Symbol::Addition => "Addition",
+		})
+	}
+}
+
 impl Symbol {
 	pub fn get_type(&self, parser: &Parser) -> Option<Type> {
 		match *self {
 			Symbol::Text(ref val) => Some(Type::Text(val.clone())),
+			Symbol::Identifier(ref val) => Some(Type::Text(val.clone())),
 			Symbol::UserPath(ref val) => Some(Type::UserPath(val.clone())),
 			Symbol::Parenthesis(ref val) => {
-				// let mut is_comma = false;
-				// Some(Type::Tuple(val.0.iter().filter(
-				// 	|_| {is_comma = !is_comma;is_comma}
-				// ).map(
-				// 	|v| v.symbol.get_type().unwrap()
-				// ).collect()))
 				if val.is_comma_delimited() {
-					Some(Type::Tuple(val.split_commas()
-						.iter().map(
-							|v| if v.len() == 1 {
-								v[0].symbol.get_type(&parser).unwrap()
-							} else {
-								Type::Expression(Box::new(parser.parse_expression(&v).unwrap()))
+					let mut tuple = Vec::new();
+					for v in val.split_commas() {
+						if parser::is_expression(&v) {
+							tuple.push(Type::Expression(Box::new(parser.parse_expression(&v).unwrap())));
+						} else {
+							for symdef in v {
+								tuple.push(symdef.symbol.get_type(&parser).unwrap());
 							}
-						).collect()
-					))
+						}
+					}
+					Some(Type::Tuple(tuple))
 				} else {
-					Some(Type::Expression(Box::new(parser.parse_expression(&val.0).unwrap())))
+					if parser::is_expression(&val.0) {
+						Some(Type::Expression(Box::new(parser.parse_expression(&val.0).unwrap())))
+					} else {
+						assert!(val.0.len() == 1);
+						Some(val.0[0].symbol.get_type(&parser).unwrap())
+					}
 				}
 			},
 			_ => None
@@ -108,6 +130,7 @@ impl Symbol {
 			Symbol::Addition => (true, 1000),
 			Symbol::Arrow => (true, 1001),
 			Symbol::Comma => (true, 2000),
+			Symbol::Receive(_) => (true, 1),
 			_ => (false, 0)
 		}
 	}

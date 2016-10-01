@@ -25,11 +25,12 @@ impl Interpreter {
 			&User::create_user_external("io", Box::new(
 				|_, m| match m.subject.as_ref() {
 					"print" => {
-						println!("{}", m.message);
+						print!("{}", m.message);
 						for val in &m.attachments {
-							println!("{}", val);
+							print!(" {}", val);
 						}
-					}
+						print!("\n");
+					},
 					o => println!("Bad io function {}!", o)
 				}
 			))

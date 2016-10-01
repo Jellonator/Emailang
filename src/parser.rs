@@ -167,10 +167,10 @@ impl Parser {
 							let block = take_until_matched(&mut chars, '(', ')', 0);
 							Symbol::Parenthesis(symbols::Block(self.parse_string(&block, fname)))
 						},
-						Some('{') => {
-							let block = take_until_matched(&mut chars, '{', '}', 0);
-							Symbol::CurlyBraced(symbols::Block(self.parse_string(&block, fname)))
-						},
+						// Some('{') => {
+						// 	let block = take_until_matched(&mut chars, '{', '}', 0);
+						// 	Symbol::CurlyBraced(symbols::Block(self.parse_string(&block, fname)))
+						// },
 						Some(other) => {
 							let mut string = String::new();
 							string.push(other);
@@ -268,7 +268,6 @@ impl Parser {
 	}
 
 	pub fn parse_expression(&self, symbols: &[SymbolDef]) -> Option<Instruction> {
-		// println!("Parsing expression {:?}", symbols);
 		if is_expression(symbols) {
 			let (pre, mid, post) = match split_expression(symbols) {
 				Some(val) => val,
@@ -279,6 +278,12 @@ impl Parser {
 			match mid.symbol {
 				Symbol::Arrow => Some(Instruction::MailTo(preval, postval)),
 				Symbol::Addition => Some(Instruction::Concatenate(preval, postval)),
+				Symbol::Receive(ref id) => {
+					Some(Instruction::GetEnv(match id.symbol {
+						Symbol::Identifier(ref name) => Type::Text(name.clone()),
+						ref other => other.get_type(self).unwrap()
+					}))
+				}
 				_ => None
 			}
 		} else {

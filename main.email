@@ -1,10 +1,9 @@
 !world.com;
-
 !<foo@world.com>;
 !<hello@world.com>{
 	"a" {
-		("print", "Hello, ") > <io@std.com>;
+		("print") + @("subject", "content") > <io@std.com>;
 	}
 };
-
-"a" > <hello@world.com>;
+("a", "World!") > <hello@world.com>;
+"woo" > <foo@world.com>
