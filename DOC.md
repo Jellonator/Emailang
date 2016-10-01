@@ -10,6 +10,9 @@ Document of things in Emailaing:
 A tuple with a single value can be constructed by adding a single comma after
 the value, e.g. `("foo",)`. An empty tuple can be constructed with `(,)`.
 
+Alphanumeric words, e.g. `foo`, `bar_baz` and `123`, will all be treated as a
+string, provided they contain no whitespace or unexpected characters.
+
 ### Operators
 The following operators exist:
 
@@ -25,7 +28,8 @@ in `("a", "b", "c")`
 the value of the environment variable of that name. If instead of an identifier
 a tuple is given, this operator will return a tuple with all of the values of
 the identifiers in the environment, e.g. `@("message", "subject")` will evaluate
-to `(email message, email subject)`.
+to `(email message, email subject)`. Note that `@content` and `@"content"` are
+the same, as well as `@(content, subject)` and `@("content", "subject")`.
 
 ### Internals
 In general, the following set of operations are carried out every frame:

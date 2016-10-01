@@ -114,21 +114,21 @@ is called an 'environment.' The environment is what contains all of the
 information sent to the user in the email.
 
 Data can be retrieved from the environment using the `@` symbol,
-e.g. `@"content"` will retrieve the content of the message. The following environment variables can also be accessed:
+e.g. `@content` will retrieve the content of the message. The following environment variables can also be accessed:
 
-* `@"subject"` - The subject of the email
-* `@"content"` - The content of the email
-* `@"attach1"` - The first attachment in the email (may be null)
-* `@"attach2"` - The second attachment in the email (may be null)
+* `@subject` - The subject of the email
+* `@content` - The content of the email
+* `@attach1` - The first attachment in the email (may be null)
+* `@attach2` - The second attachment in the email (may be null)
 * ...
-* `@"attachn"` - The nth attachment in the email (may be null)
+* `@attachn` - The nth attachment in the email (may be null)
 
 So now that we can retrieve information from an email, we can finally implement
 this into our user:
 ```
 !<username@servername.com>{
 	"foo" {
-		("print", "Received mail:", @"content") > <io@std.com>
+		("print", "Received mail:", @content) > <io@std.com>
 	}
 	"bar" {
 		("print", "Received classified information!") > <io@std.com>
@@ -146,7 +146,7 @@ Our final code will now look like this:
 !servername.com;
 !<username@servername.com>{
 	"foo" {
-		("print", "Received mail:", @"content") > <io@std.com>
+		("print", "Received mail:", @content) > <io@std.com>
 	}
 	"bar" {
 		("print", "Received classified information!") > <io@std.com>
