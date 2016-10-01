@@ -4,7 +4,6 @@ use std::str::Chars;
 use instruction::Instruction;
 use user::*;
 use std::slice::Iter;
-use std::collections::HashMap;
 use types::Type;
 use error::ErrorFactory;
 
@@ -116,8 +115,8 @@ impl Parser {
 		Parser {}
 	}
 
-	fn parse_user_block(&self, block: &[SymbolDef]) -> HashMap<String, Vec<Instruction>> {
-		let mut ret = HashMap::new();
+	fn parse_user_block(&self, block: &[SymbolDef]) -> Vec<(String, Vec<Instruction>)> {
+		let mut ret = Vec::new();
 		let mut symbols = block.iter();
 		loop {
 			// take one string, take one block
@@ -138,7 +137,7 @@ impl Parser {
 			} else {
 				panic!();
 			};
-			ret.insert(name.clone(), self.parse_symbols(&block.0));
+			ret.push((name.clone(), self.parse_symbols(&block.0)));
 		}
 		ret
 	}
@@ -274,7 +273,7 @@ impl Parser {
 					Symbol::UserPath(ref path) => {
 						assert!(chunk.len() <= 3);
 						let block = if chunk.len() == 2 {
-							HashMap::new()
+							Vec::new()
 						} else {
 							if let Symbol::CurlyBraced(ref block) = chunk[2].symbol {
 								self.parse_user_block(&block.0)

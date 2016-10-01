@@ -1,12 +1,12 @@
 use interpreter::Interpreter;
 use mail::Mail;
 use instruction::Instruction;
-use std::collections::HashMap;
 use std::rc::Rc;
 use std::fmt;
 use types::Type;
 use environment::Environment;
 use server::Server;
+extern crate regex;
 
 #[derive(Clone, Debug)]
 pub struct UserPath(pub String, pub String);
@@ -31,11 +31,12 @@ impl User {
 		}
 	}
 
-	pub fn create_user_internal(name: &str, instructions: HashMap<String, Vec<Instruction>>)
+	pub fn create_user_internal(name: &str, instructions: Vec<(String, Vec<Instruction>)>)
 	-> User {
 		User {
 			name: name.to_string(),
-			func: UserType::Internal(instructions)
+			func: UserType::Internal(instructions.iter().map(
+				|v|(regex::Regex::new(&v.0).unwrap(), v.1.clone())).collect())
 		}
 	}
 
@@ -58,11 +59,11 @@ impl User {
 					.map(|v|Type::Text(v.clone()))
 					.collect()
 				));
-				match v.get(&mail.subject) {
-					Some(ref ivec) => {
-						inter.run(&ivec, &mut env);
-					},
-					None => {}
+				for matcher in v {
+					if matcher.0.is_match(&mail.subject) {
+						inter.run(&matcher.1, &mut env);
+						break;
+					}
 				}
 			}
 		}
@@ -74,5 +75,5 @@ pub type UserExtFunc = Fn(&mut Interpreter, &Mail);
 #[derive(Clone)]
 pub enum UserType {
 	External(Rc<Box<UserExtFunc>>),
-	Internal(HashMap<String, Vec<Instruction>>)
+	Internal(Vec<(regex::Regex, Vec<Instruction>)>)
 }

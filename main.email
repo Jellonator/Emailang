@@ -1,10 +1,18 @@
 !bar;
 !<foo@bar> {
-	"start" {
-		("iterate", "loop") + @content + @attachments > <loop@std.com>;
+	"foo" {
+		("print", "Matched foo", @subject) > <io@std.com>;
 	}
-	"loop" {
-		("print", @content) > <io@std.com>;
+	"bar" {
+		("print", "Matched bar", @subject) > <io@std.com>;
+	}
+	"" {
+		("print", "Does not match", @subject) > <io@std.com>;
 	}
 };
-("start", "A", "B", "C") > <foo@bar>;
+"foo"    > <foo@bar>;
+"foobar" > <foo@bar>;
+"barfoo" > <foo@bar>;
+"bar"    > <foo@bar>;
+"baz"    > <foo@bar>;
+"bazbar" > <foo@bar>;
