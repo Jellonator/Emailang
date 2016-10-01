@@ -24,9 +24,9 @@ All statements must end with a semicolon `;`.
 Like many languages, Emailang includes a basic type system. The basic
 types are as so:
 
-* String - A sequence of characters, e.g. "foo"
-* Tuple - A sequence of other data types, e.g. ("Foo", "Bar", "Baz")
-* User - A name and domain which refers to a user, e.g. <foo@bar.com>
+* String - A sequence of characters, e.g. `"foo"`
+* Tuple - A sequence of other data types, e.g. `("Foo", "Bar", "Baz")`
+* User - A name and domain which refers to a user, e.g. `<foo@bar.com>`
 
 ### Creating servers and users
 In order to use Emailang, a user must first be created. To create a user, a
@@ -92,12 +92,12 @@ We still aren't getting any messages printed to the screen.
 In order to print something to the screen, we need to be able to use the
 standard library. All standard functions are defined in the server 'std.com'.
 Users in the standard domain represent different submodules of the standard
-domain, for example '<io@std.com>' handles input/output based functions.
+domain, for example `<io@std.com>` handles input/output based functions.
 
 To use the standard library, an email must be sent to the standard library. The
 subject of email refers to the specific function in the library to use. To
 print something to the terminal, an email with the subject "print" must be sent
-to the user '<io@std.com>', for example:
+to the user `<io@std.com>`, for example:
 ```
 # Tell the io standard library to print "Hello, World!" to the screen.
 ("print", "Hello,", "World!") > <io@std.com>;
