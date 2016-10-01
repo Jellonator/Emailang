@@ -1,7 +1,12 @@
-!world.com; # Register a server named 'world.com'
-!<hello@world.com>{ # Register a user hello@world.com
-	"foo" { # Match a subject named 'foo'
-		("print",) + @content > <io@std.com>; # Send an email to io@std.com to print out the content of the email that was received
+!servername.com;
+!<username@servername.com>{
+	"foo" {
+		("print", "Received mail:", @content) > <io@std.com>
+	}
+	"bar" {
+		("print", "Received classified information!") > <io@std.com>
 	}
 };
-("foo", "Hello, World!") > <hello@world.com>; # Send an email with the subject 'foo' and the message 'World!' to hello@world.com
+("foo", "Have a great day!") > <username@servername.com>;
+("bar", "Important document", "Nuclear launch code: 12345") > <username@servername.com>;
+("foo", "How was your weekend?") > <username@servername.com>;
