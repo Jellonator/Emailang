@@ -62,11 +62,11 @@ pub enum Symbol {
 	// Syntax
 	Comma,
 	Semicolon,
-	Receive(Box<SymbolDef>),
 	// Operators
 	Define,
 	Arrow,
 	Addition,
+	Receive,
 }
 
 #[derive(Clone)]
@@ -85,7 +85,7 @@ impl fmt::Debug for SymbolDef {
 			Symbol::Text(_) => "Text",
 			Symbol::Comma => "Comma",
 			Symbol::Semicolon => "Semicolon",
-			Symbol::Receive(_) => "Receiver",
+			Symbol::Receive => "Receiver",
 			Symbol::Define => "Define",
 			Symbol::Arrow => "Arrow",
 			Symbol::Addition => "Addition",
@@ -130,7 +130,7 @@ impl Symbol {
 			Symbol::Addition => (true, 1000),
 			Symbol::Arrow => (true, 1001),
 			Symbol::Comma => (true, 2000),
-			Symbol::Receive(_) => (true, 1),
+			Symbol::Receive => (true, 1),
 			_ => (false, 0)
 		}
 	}

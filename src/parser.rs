@@ -160,35 +160,7 @@ impl Parser {
 				';' => Symbol::Semicolon,
 				'>' => Symbol::Arrow,
 				'+' => Symbol::Addition,
-				'@' => {
-					let snext = chars.next();
-					let symbol = match snext {
-						Some('(') => {
-							let block = take_until_matched(&mut chars, '(', ')', 0);
-							Symbol::Parenthesis(symbols::Block(self.parse_string(&block, fname)))
-						},
-						// Some('{') => {
-						// 	let block = take_until_matched(&mut chars, '{', '}', 0);
-						// 	Symbol::CurlyBraced(symbols::Block(self.parse_string(&block, fname)))
-						// },
-						Some(other) => {
-							let mut string = String::new();
-							string.push(other);
-							string.push_str(&chars.by_ref()
-								.take_while(|v|!v.is_whitespace()).collect::<String>());
-							Symbol::Identifier(string)
-						},
-						None => panic!()
-					};
-					let def = SymbolDef{
-						symbol: symbol,
-						errfactory: ErrorFactory {
-							line: line,
-							file: fname.to_string()
-						}
-					};
-					Symbol::Receive(Box::new(def))
-				}
+				'@' => Symbol::Receive,
 				'<' => {
 					let path = take_until(&mut chars, '>');
 					let pos = path.find('@').unwrap();
@@ -278,11 +250,8 @@ impl Parser {
 			match mid.symbol {
 				Symbol::Arrow => Some(Instruction::MailTo(preval, postval)),
 				Symbol::Addition => Some(Instruction::Concatenate(preval, postval)),
-				Symbol::Receive(ref id) => {
-					Some(Instruction::GetEnv(match id.symbol {
-						Symbol::Identifier(ref name) => Type::Text(name.clone()),
-						ref other => other.get_type(self).unwrap()
-					}))
+				Symbol::Receive => {
+					Some(Instruction::GetEnv(postval))
 				}
 				_ => None
 			}
