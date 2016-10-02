@@ -177,6 +177,22 @@ impl Parser {
 				'"' => {
 					Symbol::Text(take_until_unescaped(&mut chars, '"'))
 				},
+				'[' => {
+					let indexcontents = take_until(&mut chars, ']');
+					match indexcontents.find(':') {
+						None => {
+							Symbol::Index(indexcontents.parse::<usize>().unwrap())
+						},
+						Some(pos) => {
+							let val1 = &indexcontents[..pos];
+							let val2 = &indexcontents[pos+1..];
+							Symbol::Slice(
+								Some(val1.parse::<usize>().unwrap()),
+								Some(val2.parse::<usize>().unwrap())
+							)
+						}
+					}
+				},
 				'#' => {
 					take_until(&mut chars, '\n');
 					continue;
@@ -250,7 +266,16 @@ impl Parser {
 				Symbol::Arrow => Some(Instruction::MailTo(preval, postval)),
 				Symbol::Addition => Some(Instruction::Concatenate(preval, postval)),
 				Symbol::Receive => {
+					assert!(preval.is_null());
 					Some(Instruction::GetEnv(postval))
+				},
+				Symbol::Slice(pos1, pos2) => {
+					assert!(postval.is_null());
+					Some(Instruction::Slice(preval, pos1, pos2))
+				},
+				Symbol::Index(pos) => {
+					assert!(postval.is_null());
+					Some(Instruction::Index(preval, pos))
 				}
 				_ => None
 			}

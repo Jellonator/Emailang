@@ -62,6 +62,8 @@ pub enum Symbol {
 	// Syntax
 	Comma,
 	Semicolon,
+	Index(usize),
+	Slice(Option<usize>, Option<usize>),
 	// Operators
 	Define,
 	Arrow,
@@ -89,6 +91,8 @@ impl fmt::Debug for SymbolDef {
 			Symbol::Define => "Define",
 			Symbol::Arrow => "Arrow",
 			Symbol::Addition => "Addition",
+			Symbol::Slice(_,_) => "Slice",
+			Symbol::Index(_) => "Index",
 		})
 	}
 }
@@ -130,7 +134,9 @@ impl Symbol {
 			Symbol::Addition => (true, 1000),
 			Symbol::Arrow => (true, 1001),
 			Symbol::Comma => (true, 2000),
-			Symbol::Receive => (true, 1),
+			Symbol::Receive => (true, 2),
+			Symbol::Slice(_,_) => (true, 1),
+			Symbol::Index(_) => (true, 1),
 			_ => (false, 0)
 		}
 	}

@@ -13,6 +13,8 @@ pub enum Instruction {
 	MailTo(Type, Type),
 	Concatenate(Type, Type),
 	GetEnv(Type),
+	Slice(Type, Option<usize>, Option<usize>),
+	Index(Type, usize),
 }
 
 impl fmt::Display for Instruction {
@@ -32,6 +34,12 @@ impl fmt::Display for Instruction {
 			},
 			Instruction::GetEnv(_) => {
 				write!(f, "Get variable from environment")
+			},
+			Instruction::Slice(_, a, b) => {
+				write!(f, "Slice variable from {:?} to {:?}", a, b)
+			},
+			Instruction::Index(_, pos) => {
+				write!(f, "Index variable at {}", pos)
 			}
 		}
 	}
@@ -49,7 +57,6 @@ impl Instruction {
 			Instruction::MailTo(ref draft, ref name) => {
 				let d = draft.get_draft(&mut inter, &mut env).unwrap();
 				let target = name.get_user(&mut inter, &mut env).unwrap();
-
 				inter.mail(&Mail {
 					subject: d.subject,
 					message: d.message,
@@ -98,6 +105,20 @@ impl Instruction {
 				} else {
 					panic!();
 				};
+			},
+			Instruction::Index(ref val, pos) => {
+				return val.index(pos, inter, env).unwrap();
+			},
+			Instruction::Slice(ref val, a, b) => {
+				let start = match a {
+					Some(val) => val,
+					None => 0
+				};
+				let end = match b {
+					Some(val) => val,
+					None => val.len(inter, env).unwrap()
+				};
+				return val.slice(start, end, inter, env).unwrap();
 			}
 		}
 		Type::Null

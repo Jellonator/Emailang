@@ -1,18 +1,7 @@
 !bar;
 !<foo@bar> {
-	"foo" {
-		("print", "Matched foo", @subject) > <io@std.com>;
-	}
-	"bar" {
-		("print", "Matched bar", @subject) > <io@std.com>;
-	}
 	"" {
-		("print", "Does not match", @subject) > <io@std.com>;
+		("print") + ("a", "b", "c", "d", "e", "f")[3:4] > <io@std.com>
 	}
 };
-"foo"    > <foo@bar>;
-"foobar" > <foo@bar>;
-"barfoo" > <foo@bar>;
-"bar"    > <foo@bar>;
-"baz"    > <foo@bar>;
-"bazbar" > <foo@bar>;
+"a" > <foo@bar>;
