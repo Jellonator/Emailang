@@ -1,6 +1,7 @@
 use types::Type;
 use std::collections::HashMap;
 
+#[derive(Clone)]
 pub struct Environment {
 	pub data: HashMap<String, Type>,
 	pub username: String,
@@ -14,6 +15,10 @@ impl Environment {
 			username: username.to_string(),
 			server: server.to_string()
 		}
+	}
+
+	pub fn has(&self, key: &str) -> bool {
+		self.data.contains_key(key)
 	}
 
 	pub fn new_anon() -> Environment {

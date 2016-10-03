@@ -15,6 +15,7 @@ pub enum Instruction {
 	GetEnv(Type),
 	Slice(Type, Option<usize>, Option<usize>),
 	Index(Type, usize),
+	Assign(Type, Type)
 }
 
 impl fmt::Display for Instruction {
@@ -40,6 +41,9 @@ impl fmt::Display for Instruction {
 			},
 			Instruction::Index(_, pos) => {
 				write!(f, "Index variable at {}", pos)
+			},
+			Instruction::Assign(_, _) => {
+				write!(f, "Assign a variable")
 			}
 		}
 	}
@@ -119,6 +123,12 @@ impl Instruction {
 					None => val.len(inter, env).unwrap()
 				};
 				return val.slice(start, end, inter, env).unwrap();
+			},
+			Instruction::Assign(ref to, ref val) => {
+				let s = &to.get_string(inter, env).unwrap();
+				let content = val.resolve(inter, env);
+				env.set(s, content);
+				return val.clone();
 			}
 		}
 		Type::Null

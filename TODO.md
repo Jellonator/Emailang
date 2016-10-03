@@ -4,4 +4,3 @@ List of things to do in the future:
 * More string manipulation
 * Math library
 * Server spam filter
-* Way to converge information from multiple emails.

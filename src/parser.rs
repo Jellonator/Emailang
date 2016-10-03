@@ -160,6 +160,7 @@ impl Parser {
 				'>' => Symbol::Arrow,
 				'+' => Symbol::Addition,
 				'@' => Symbol::Receive,
+				'=' => Symbol::Assign,
 				'<' => {
 					let path = take_until(&mut chars, '>');
 					let pos = path.find('@').unwrap();
@@ -276,7 +277,10 @@ impl Parser {
 				Symbol::Index(pos) => {
 					assert!(postval.is_null());
 					Some(Instruction::Index(preval, pos))
-				}
+				},
+				Symbol::Assign => {
+					Some(Instruction::Assign(preval, postval))
+				},
 				_ => None
 			}
 		} else {

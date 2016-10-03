@@ -1,7 +1,13 @@
 !bar;
 !<foo@bar> {
-	"" {
-		("print") + ("a", "b", "c", "d", "e", "f")[3:4] > <io@std.com>
+	"^set$" {
+		value = @content;
+	}
+	"^print$" {
+		("print", @value) > <io@std.com>
 	}
 };
-"a" > <foo@bar>;
+("set", "foo") > <foo@bar>;
+("print") > <foo@bar>;
+("set", "bar") > <foo@bar>;
+("print") > <foo@bar>;

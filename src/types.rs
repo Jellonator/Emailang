@@ -17,7 +17,7 @@ impl Type {
 	pub fn resolve(&self, inter: &mut Interpreter, env: &mut Environment) -> Type {
 		match *self {
 			Type::Expression(ref exp) => {
-				exp.call(inter, env)
+				exp.call(inter, env).resolve(inter, env)
 			},
 			ref other => other.clone()
 		}

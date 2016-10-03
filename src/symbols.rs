@@ -69,6 +69,7 @@ pub enum Symbol {
 	Arrow,
 	Addition,
 	Receive,
+	Assign,
 }
 
 #[derive(Clone)]
@@ -93,6 +94,7 @@ impl fmt::Debug for SymbolDef {
 			Symbol::Addition => "Addition",
 			Symbol::Slice(_,_) => "Slice",
 			Symbol::Index(_) => "Index",
+			Symbol::Assign => "Assignment"
 		})
 	}
 }
@@ -131,9 +133,10 @@ impl Symbol {
 
 	pub fn get_operator(&self) -> (bool, usize) {
 		match *self {
-			Symbol::Addition => (true, 1000),
-			Symbol::Arrow => (true, 1001),
 			Symbol::Comma => (true, 2000),
+			Symbol::Assign => (true, 1002),
+			Symbol::Arrow => (true, 1001),
+			Symbol::Addition => (true, 1000),
 			Symbol::Receive => (true, 2),
 			Symbol::Slice(_,_) => (true, 1),
 			Symbol::Index(_) => (true, 1),
