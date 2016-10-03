@@ -99,6 +99,37 @@ impl fmt::Debug for SymbolDef {
 	}
 }
 
+#[derive(Clone, Copy)]
+pub enum OperatorType {
+	LeftToRight(usize),
+	RightToLeft(usize),
+	Neither
+}
+
+impl OperatorType {
+	pub fn compare(&self, other:usize) -> bool {
+		match *self {
+			OperatorType::LeftToRight(val) => val > other,
+			OperatorType::RightToLeft(val) => val >= other,
+			OperatorType::Neither => false
+		}
+	}
+	pub fn get(&self) -> usize {
+		match *self {
+			OperatorType::LeftToRight(val) => val,
+			OperatorType::RightToLeft(val) => val,
+			OperatorType::Neither => 0
+		}
+	}
+	pub fn is_op(&self) -> bool {
+		if let OperatorType::Neither = *self {
+			false
+		} else {
+			true
+		}
+	}
+}
+
 impl Symbol {
 	pub fn get_type(&self, parser: &Parser) -> Option<Type> {
 		match *self {
@@ -131,16 +162,19 @@ impl Symbol {
 		}
 	}
 
-	pub fn get_operator(&self) -> (bool, usize) {
+	pub fn get_operator(&self) -> OperatorType {
 		match *self {
-			Symbol::Comma => (true, 2000),
-			Symbol::Assign => (true, 1002),
-			Symbol::Arrow => (true, 1001),
-			Symbol::Addition => (true, 1000),
-			Symbol::Receive => (true, 2),
-			Symbol::Slice(_,_) => (true, 1),
-			Symbol::Index(_) => (true, 1),
-			_ => (false, 0)
+			// Separators
+			Symbol::Comma      => OperatorType::LeftToRight(2000),
+			// Operators
+			Symbol::Assign     => OperatorType::RightToLeft(1002),
+			Symbol::Arrow      => OperatorType::LeftToRight(1001),
+			Symbol::Addition   => OperatorType::LeftToRight(1000),
+			// Modifier operators
+			Symbol::Slice(_,_) => OperatorType::LeftToRight(2),
+			Symbol::Index(_)   => OperatorType::LeftToRight(2),
+			Symbol::Receive    => OperatorType::RightToLeft(1),
+			_ => OperatorType::Neither
 		}
 	}
 }

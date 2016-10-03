@@ -55,6 +55,7 @@ impl User {
 				self.env.server = server.name.clone();
 				self.env.set("subject", Type::Text(mail.subject.clone()));
 				self.env.set("content", Type::Text(mail.message.clone()));
+				self.env.set("sender", Type::UserPath(mail.from.clone()));
 				// for i in 0..mail.attachments.len() {
 				// 	self.env.set(&("attach".to_string() + &i.to_string()),
 				// 		Type::Text(mail.attachments[i].clone()));

@@ -1,13 +1,25 @@
 !bar;
-!<foo@bar> {
+!<global@bar> {
 	"^set$" {
-		value = @content;
+		@content = @attachments[0];
 	}
 	"^print$" {
-		("print", @value) > <io@std.com>
+		("print", @@content) > <io@std.com>;
+	}
+	"^get$" {
+		(@content, @@attachments[0]) > @sender;
 	}
 };
-("set", "foo") > <foo@bar>;
-("print") > <foo@bar>;
-("set", "bar") > <foo@bar>;
-("print") > <foo@bar>;
+
+!<user@bar> {
+	"^start$" {
+		(set, "thing", "Hello!") > <global@bar>;
+		(print, "thing") > <global@bar>;
+		(get, receive, "thing") > <global@bar>;
+	}
+	"^receive$" {
+		(print, "received: " + @content) > <io@std.com>;
+	}
+};
+
+"start" > <user@bar>;

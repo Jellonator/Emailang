@@ -38,6 +38,9 @@ the range [n, m). When used on a string, it returns a substring from n inclusive
 to m exclusive. Examples: `"hello"[1:4]` returns `"ell"`, and
 `("a", "b", "c", "d")[1:3]` returns `("b", "c")`.
 
+`=` - Assignment. Assigns a variable in the user's environment to the value on
+the right hand side.
+
 ### User definition
 When defining a user, typically a block is placed after the username that is
 used to give functionality to a user. This block contains a list of subject

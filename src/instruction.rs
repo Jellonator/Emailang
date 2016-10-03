@@ -98,8 +98,8 @@ impl Instruction {
 				}
 			},
 			Instruction::GetEnv(ref val) => {
-				let rawkey = val.get_string(&mut inter, &mut env);
-				let rawtuple = val.get_tuple(&mut inter, &mut env);
+				let rawkey = val.get_string(inter, env);
+				let rawtuple = val.get_tuple(inter, env);
 				return if let Some(tuple) = rawtuple {
 					Type::Tuple(tuple.iter().map(
 						|v|{let s = &v.get_string(&mut inter, &mut env).unwrap();env.get(s)}

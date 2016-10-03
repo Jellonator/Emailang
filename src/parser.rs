@@ -80,8 +80,7 @@ pub fn take_symbols_until_semicolon(symbols: &mut Iter<SymbolDef>) -> Vec<Symbol
 
 pub fn is_expression(symbols: &[SymbolDef]) -> bool {
 	for s in symbols {
-		let (is_op, _) = s.symbol.get_operator();
-		if is_op {
+		if s.symbol.get_operator().is_op() {
 			return true;
 		}
 	}
@@ -94,10 +93,10 @@ pub fn split_expression(symbols: &[SymbolDef])
 	let mut pos = symbols.len();
 	let mut p = 0;
 	for i in 0..pos {
-		let (is_op, op_prec) = symbols[i].symbol.get_operator();
-		if is_op && op_prec >= p {
+		let op = symbols[i].symbol.get_operator();
+		if op.compare(p) {
 			pos = i;
-			p = op_prec;
+			p = op.get();
 		}
 	}
 
