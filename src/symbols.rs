@@ -62,8 +62,8 @@ pub enum Symbol {
 	// Syntax
 	Comma,
 	Semicolon,
-	Index(usize),
-	Slice(Option<usize>, Option<usize>),
+	Index(isize),
+	Slice(Option<isize>, Option<isize>),
 	// Operators
 	Define,
 	Arrow,
@@ -173,7 +173,7 @@ impl Symbol {
 			// Modifier operators
 			Symbol::Slice(_,_) => OperatorType::LeftToRight(2),
 			Symbol::Index(_)   => OperatorType::LeftToRight(2),
-			Symbol::Receive    => OperatorType::RightToLeft(1),
+			Symbol::Receive    => OperatorType::LeftToRight(1),
 			_ => OperatorType::Neither
 		}
 	}

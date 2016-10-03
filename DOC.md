@@ -29,7 +29,10 @@ the value of the environment variable of that name. If instead of an identifier
 a tuple is given, this operator will return a tuple with all of the values of
 the identifiers in the environment, e.g. `@("message", "subject")` will evaluate
 to `(email message, email subject)`. Note that `@content` and `@"content"` are
-the same, as well as `@(content, subject)` and `@("content", "subject")`.
+the same, as well as `@(content, subject)` and `@("content", "subject")`. It is
+possible to chain retrieval operators, e.g.
+`foo = bar; bar = "Hello, World!"; ("print", @@foo) > <io@std.com>` will
+print out `"Hello, World!"`.
 
 `[n]` - Index. Can get an element from a tuple, or a character from a string.
 
@@ -39,7 +42,12 @@ to m exclusive. Examples: `"hello"[1:4]` returns `"ell"`, and
 `("a", "b", "c", "d")[1:3]` returns `("b", "c")`.
 
 `=` - Assignment. Assigns a variable in the user's environment to the value on
-the right hand side.
+the right hand side. Note that the variable being assigned to should be a
+string or identifier, NOT a retrieval operator, e.g. `@foo = "bar"` might not
+work; instead, use `foo = "bar"`. It is, however, possible to use the retrieval
+operator on the left side like this:
+`foo = "Hello!"; bar = "foo"; @bar = "World!";("print", @foo) > <io@std.com>;`,
+which will print `"World!"`
 
 ### User definition
 When defining a user, typically a block is placed after the username that is

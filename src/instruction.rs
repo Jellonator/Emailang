@@ -13,8 +13,8 @@ pub enum Instruction {
 	MailTo(Type, Type),
 	Concatenate(Type, Type),
 	GetEnv(Type),
-	Slice(Type, Option<usize>, Option<usize>),
-	Index(Type, usize),
+	Slice(Type, Option<isize>, Option<isize>),
+	Index(Type, isize),
 	Assign(Type, Type)
 }
 
@@ -102,7 +102,7 @@ impl Instruction {
 				let rawtuple = val.get_tuple(inter, env);
 				return if let Some(tuple) = rawtuple {
 					Type::Tuple(tuple.iter().map(
-						|v|{let s = &v.get_string(&mut inter, &mut env).unwrap();env.get(s)}
+						|v|{let s = &v.get_string(inter, env).unwrap();env.get(s)}
 						).collect())
 				} else if let Some(key) = rawkey {
 					env.get(&key)
@@ -120,15 +120,30 @@ impl Instruction {
 				};
 				let end = match b {
 					Some(val) => val,
-					None => val.len(inter, env).unwrap()
+					None => val.len(inter, env).unwrap() as isize
 				};
 				return val.slice(start, end, inter, env).unwrap();
 			},
 			Instruction::Assign(ref to, ref val) => {
-				let s = &to.get_string(inter, env).unwrap();
-				let content = val.resolve(inter, env);
-				env.set(s, content);
-				return val.clone();
+				match to.get_string(inter, env) {
+					Some(ref s) => {
+						let content = val.resolve(inter, env);
+						env.set(s, content);
+						return val.clone();
+					},
+					None => {
+						match (to.get_tuple(inter, env), val.get_tuple(inter, env)) {
+							(Some(ref tuple), Some(ref res)) => {
+								for i in 0..tuple.len() {
+									let s = &tuple[i].get_string(inter, env).unwrap();
+									let content = res[i].resolve(inter, env);
+									env.set(s, content);
+								}
+							},
+							_ => panic!()
+						}
+					}
+				}
 			}
 		}
 		Type::Null

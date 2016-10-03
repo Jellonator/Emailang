@@ -1,24 +1,39 @@
 !bar;
-!<global@bar> {
-	"^set$" {
-		@content = @attachments[0];
+!<stack@bar> {
+	"^init$" {
+		data = (,);
+	}
+	"^push$" {
+		data = @data + (@content) + (@attachments);
 	}
 	"^print$" {
-		("print", @@content) > <io@std.com>;
+		print + @data > <io@std.com>;
 	}
-	"^get$" {
-		(@content, @@attachments[0]) > @sender;
+	"^empty$" {
+
+	}
+	"^pop$" {
+		(@content, @data[-1]) > @sender;
+		data = @data[0:-1];
 	}
 };
 
+init > <stack@bar>;
+
 !<user@bar> {
 	"^start$" {
-		(set, "thing", "Hello!") > <global@bar>;
-		(print, "thing") > <global@bar>;
-		(get, receive, "thing") > <global@bar>;
+		(push, foo, bar) > <stack@bar>;
+		(push, baz, faz) > <stack@bar>;
+		(print) > <stack@bar>;
+		(empty) > <stack@bar>;
+		(print) > <stack@bar>;
+		(pop, get_pop) > <stack@bar>;
+		(pop, get_pop) > <stack@bar>;
+		(pop, get_pop) > <stack@bar>;
+		(pop, get_pop) > <stack@bar>;
 	}
-	"^receive$" {
-		(print, "received: " + @content) > <io@std.com>;
+	"^get_pop$" {
+		(print, "Popped: ", @content) > <io@std.com>;
 	}
 };
 

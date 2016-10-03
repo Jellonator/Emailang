@@ -19,6 +19,9 @@ impl Type {
 			Type::Expression(ref exp) => {
 				exp.call(inter, env).resolve(inter, env)
 			},
+			Type::Tuple(ref tuple) => {
+				Type::Tuple(tuple.iter().map(|v|v.resolve(inter, env)).collect())
+			},
 			ref other => other.clone()
 		}
 	}
@@ -32,23 +35,41 @@ impl Type {
 		}
 	}
 
-	pub fn index(&self, pos: usize, inter: &mut Interpreter, env: &mut Environment) -> Option<Type> {
+	pub fn index(&self, pos: isize, inter: &mut Interpreter, env: &mut Environment) -> Option<Type> {
+		let selflen = self.len(inter, env).unwrap();
+		let pos = if pos < 0 {
+			((selflen as isize) + pos) as usize
+		} else {
+			pos as usize
+		};
 		match *self {
 			Type::Tuple(ref vec) => Some(vec[pos].clone()),
 			Type::Text(ref text) => Some(Type::Text(text.chars().nth(pos).unwrap().to_string())),
-			Type::Expression(_) => self.resolve(inter, env).index(pos, inter, env),
+			Type::Expression(_) => self.resolve(inter, env).index(pos as isize, inter, env),
 			_ => None
 		}
 	}
 
-	pub fn slice(&self, a: usize, b: usize, inter: &mut Interpreter, env: &mut Environment) -> Option<Type> {
+	pub fn slice(&self, a: isize, b: isize, inter: &mut Interpreter, env: &mut Environment) -> Option<Type> {
+		let selflen = self.len(inter, env).unwrap();
+		let a = if a < 0 {
+			((selflen as isize) + a) as usize
+		} else {
+			a as usize
+		};
+		let b = if b < 0 {
+			((selflen as isize) + b) as usize
+		} else {
+			b as usize
+		};
 		match *self {
 			Type::Tuple(ref vec) => Some(Type::Tuple(vec[a..b].to_vec())),
 			Type::Text(ref text) => {
 				let chars = text.chars();
-				Some(Type::Text(chars.skip(a).take(b-a).collect()))
+				Some(Type::Text(chars.skip(a as usize).take(b-a).collect()))
 			},
-			Type::Expression(_) => self.resolve(inter, env).slice(a, b, inter, env),
+			Type::Expression(_) => self.resolve(inter, env)
+				.slice(a as isize, b as isize, inter, env),
 			_ => None
 		}
 	}

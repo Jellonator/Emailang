@@ -181,14 +181,14 @@ impl Parser {
 					let indexcontents = take_until(&mut chars, ']');
 					match indexcontents.find(':') {
 						None => {
-							Symbol::Index(indexcontents.parse::<usize>().unwrap())
+							Symbol::Index(indexcontents.parse::<isize>().unwrap())
 						},
 						Some(pos) => {
 							let val1 = &indexcontents[..pos];
 							let val2 = &indexcontents[pos+1..];
 							Symbol::Slice(
-								Some(val1.parse::<usize>().unwrap()),
-								Some(val2.parse::<usize>().unwrap())
+								Some(val1.parse::<isize>().unwrap()),
+								Some(val2.parse::<isize>().unwrap())
 							)
 						}
 					}
