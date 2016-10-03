@@ -24,12 +24,27 @@ concatenate these two strings together. If one or both of them are a tuple, it
 will concatenate them as a tuple. E.g., `"a" + ("b", "c")` results
 in `("a", "b", "c")`
 
-`@` - Technically an operator. Takes the identifier to the right and retrieves
+`@` - Retrieval. Takes the identifier to the right and retrieves
 the value of the environment variable of that name. If instead of an identifier
 a tuple is given, this operator will return a tuple with all of the values of
 the identifiers in the environment, e.g. `@("message", "subject")` will evaluate
 to `(email message, email subject)`. Note that `@content` and `@"content"` are
 the same, as well as `@(content, subject)` and `@("content", "subject")`.
+
+`[n]` - Index. Can get an element from a tuple, or a character from a string.
+
+`[n:m]` - Slice. When used on a tuple, it returns a new tuple with elements in
+the range [n, m). When used on a string, it returns a substring from n inclusive
+to m exclusive. Examples: `"hello"[1:4]` returns `"ell"`, and
+`("a", "b", "c", "d")[1:3]` returns `("b", "c")`.
+
+### User definition
+When defining a user, typically a block is placed after the username that is
+used to give functionality to a user. This block contains a list of subject
+regexes and blocks of code. When an email is sent to a user, its subject is
+tested, from top to bottom, against every regex in the user's definition. When
+a match is found, it executes the block of code in that match. If none are
+found, it fails silently.
 
 ### Standard Domain
 The standard domain, `std.com`, contains many useful users who can manage
