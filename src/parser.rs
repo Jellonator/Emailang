@@ -74,9 +74,20 @@ pub fn take_until_matched(chars: &mut Chars, begin: char, end: char, target_leve
 }
 
 pub fn take_symbols_until_semicolon(symbols: &mut Iter<SymbolDef>) -> Vec<SymbolDef> {
-	symbols//take until a semicolon, and clone all of the symbols
-		.take_while(|n|match n.symbol{Symbol::Semicolon => false, _=>true})
-		.map(|n|n.clone()).collect()
+	let mut ret:Vec<SymbolDef> = Vec::new();
+	loop {
+		match symbols.next() {
+			None => panic!(),
+			Some(ref val) => {
+				if let Symbol::Semicolon = val.symbol {
+					break;
+				}
+				ret.push((*val).clone());
+			}
+		}
+	}
+
+	ret
 }
 
 pub fn is_expression(symbols: &[SymbolDef]) -> bool {

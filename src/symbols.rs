@@ -4,7 +4,7 @@ use error;
 use parser;
 use parser::Parser;
 
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 pub struct Block(pub Vec<SymbolDef>);
 
 impl Block {
@@ -49,7 +49,7 @@ impl Block {
  * ;        - semicolon
 **/
 
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 pub enum Symbol {
 	// Structures
 	CurlyBraced(Block),
@@ -74,7 +74,7 @@ pub enum Symbol {
 	Assign,
 }
 
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 pub struct SymbolDef {
 	pub errfactory: error::ErrorFactory,
 	pub symbol: Symbol
