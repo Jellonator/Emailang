@@ -4,6 +4,7 @@ use server::Server;
 use mail::Mail;
 use user::*;
 use environment::Environment;
+mod std;
 
 pub struct Interpreter {
 	servers: Vec<Server>,
@@ -20,45 +21,8 @@ impl Interpreter {
 			users_to_add: Vec::new(),
 			servers_to_add: Vec::new(),
 		};
-		inter.add_server("std.com");
 
-		// IO Functions
-		inter.add_user("std.com",
-			&User::create_user_external("io", Box::new(
-				|_, m| match m.subject.as_ref() {
-					"print" => {
-						print!("{}", m.message);
-						for val in &m.attachments {
-							print!(" {}", val);
-						}
-						print!("\n");
-					},
-					o => println!("Bad io function {}!", o)
-				}
-			))
-		);
-
-		// Loop Constructs
-		inter.add_user("std.com",
-			&User::create_user_external("loop", Box::new(
-				|inter, m| match m.subject.as_ref() {
-					"iterate" => { // Iterate through all attachments
-						for a in &m.attachments {
-							inter.send_mail(&Mail {
-								subject: m.message.clone(),
-								message: a.clone(),
-								attachments: Vec::new(),
-								to: m.from.clone(),
-								from: UserPath(String::new(), String::new())
-							})
-						}
-					},
-					o => println!("Bad loop function {}!", o)
-				}
-			))
-		);
-
-		inter.handle_pending();
+		std::create_std_lib(&mut inter);
 		inter
 	}
 

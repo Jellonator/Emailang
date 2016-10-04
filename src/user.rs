@@ -43,28 +43,31 @@ impl User {
 		}
 	}
 
+	pub fn create_mail(&self, to: UserPath, subject: &str, message: &str) -> Mail {
+		Mail {
+			from: UserPath(self.name.to_string(), self.env.server.clone()),
+			to: to,
+			subject: subject.to_string(),
+			message: message.to_string(),
+			attachments: Vec::new()
+		}
+	}
+
 	pub fn send(&mut self, mut inter: &mut Interpreter, mail: &Mail, server: &Server) {
-		// println!("Received mail!");
+		self.env.server = server.name.clone();
+		self.env.set("subject", Type::Text(mail.subject.clone()));
+		self.env.set("content", Type::Text(mail.message.clone()));
+		self.env.set("sender", Type::UserPath(mail.from.clone()));
+		self.env.set("attachments", Type::Tuple(mail.attachments
+			.iter()
+			.map(|v|Type::Text(v.clone()))
+			.collect()
+		));
 		match self.func {
-			UserType::External(ref mut b) => {
-				(**b)(&mut inter, &mail);
+			UserType::External(ref b) => {
+				(**b)(self, &mut inter, &mail);
 			},
 			UserType::Internal(ref v) => {
-				// let mut env = Environment::new(&self.name, &server.name);
-				// self.env.username = self.name
-				self.env.server = server.name.clone();
-				self.env.set("subject", Type::Text(mail.subject.clone()));
-				self.env.set("content", Type::Text(mail.message.clone()));
-				self.env.set("sender", Type::UserPath(mail.from.clone()));
-				// for i in 0..mail.attachments.len() {
-				// 	self.env.set(&("attach".to_string() + &i.to_string()),
-				// 		Type::Text(mail.attachments[i].clone()));
-				// }
-				self.env.set("attachments", Type::Tuple(mail.attachments
-					.iter()
-					.map(|v|Type::Text(v.clone()))
-					.collect()
-				));
 				for matcher in v {
 					if matcher.0.is_match(&mail.subject) {
 						inter.run(&matcher.1, &mut self.env);
@@ -76,7 +79,7 @@ impl User {
 	}
 }
 
-pub type UserExtFunc = Fn(&mut Interpreter, &Mail);
+pub type UserExtFunc = Fn(&User, &mut Interpreter, &Mail);
 
 #[derive(Clone)]
 pub enum UserType {

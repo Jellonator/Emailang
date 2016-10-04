@@ -9,6 +9,12 @@ pub struct Mail {
 	pub attachments: Vec<String>
 }
 
+impl Mail {
+	pub fn attach(&mut self, val: &str) {
+		self.attachments.push(val.to_string())
+	}
+}
+
 #[derive(Clone)]
 pub struct Draft {
 	pub subject: String,

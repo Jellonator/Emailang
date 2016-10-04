@@ -22,15 +22,8 @@ init > <stack@bar>;
 
 !<user@bar> {
 	"^start$" {
-		(push, foo, bar) > <stack@bar>;
-		(push, baz, faz) > <stack@bar>;
-		(print) > <stack@bar>;
-		(empty) > <stack@bar>;
-		(print) > <stack@bar>;
-		(pop, get_pop) > <stack@bar>;
-		(pop, get_pop) > <stack@bar>;
-		(pop, get_pop) > <stack@bar>;
-		(pop, get_pop) > <stack@bar>;
+		(eq, get_pop, foo, bar) > <cmp@std.com>;
+		(eq, get_pop, bar, bar) > <cmp@std.com>;
 	}
 	"^get_pop$" {
 		(print, "Popped: ", @content) > <io@std.com>;

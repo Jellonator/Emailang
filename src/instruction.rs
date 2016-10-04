@@ -3,7 +3,6 @@ use user::*;
 use mail::*;
 use interpreter::Interpreter;
 use types::Type;
-use std::fmt;
 use environment::Environment;
 
 #[derive(Clone, Debug)]
@@ -16,37 +15,6 @@ pub enum Instruction {
 	Slice(Type, Option<isize>, Option<isize>),
 	Index(Type, isize),
 	Assign(Type, Type)
-}
-
-impl fmt::Display for Instruction {
-	fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-		match *self {
-			Instruction::CreateServer(ref name) => {
-				write!(f, "Create server {}", name)
-			},
-			Instruction::CreateUser(ref name, _) => {
-				write!(f, "Create user {}", name)
-			},
-			Instruction::MailTo(_, _) => {
-				write!(f, "Send mail")
-			},
-			Instruction::Concatenate(_, _) => {
-				write!(f, "Concatenate two strings")
-			},
-			Instruction::GetEnv(_) => {
-				write!(f, "Get variable from environment")
-			},
-			Instruction::Slice(_, a, b) => {
-				write!(f, "Slice variable from {:?} to {:?}", a, b)
-			},
-			Instruction::Index(_, pos) => {
-				write!(f, "Index variable at {}", pos)
-			},
-			Instruction::Assign(_, _) => {
-				write!(f, "Assign a variable")
-			}
-		}
-	}
 }
 
 impl Instruction {
