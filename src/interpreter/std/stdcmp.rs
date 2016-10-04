@@ -5,11 +5,20 @@ use mail::Mail;
 fn func(user: &User, inter: &mut Interpreter, mail: &Mail) {
 	match mail.subject.as_ref() {
 		"eq" => {
-			if mail.attachments.get(0) == mail.attachments.get(1) {
-				inter.send_mail(&user.create_mail(mail.from.clone(), &mail.message, "true"));
-			} else {
-				inter.send_mail(&user.create_mail(mail.from.clone(), &mail.message, "false"));
-			}
+			inter.send_mail(&user.create_mail(mail.from.clone(), &mail.message,
+				match mail.attachments.get(0) == mail.attachments.get(1) {
+					true => "true",
+					false => "false"
+				}
+			));
+		},
+		"neq" => {
+			inter.send_mail(&user.create_mail(mail.from.clone(), &mail.message,
+				match mail.attachments.get(0) != mail.attachments.get(1) {
+					true => "true",
+					false => "false"
+				}
+			));
 		},
 		o => println!("Bad loop function {}!", o)
 	}

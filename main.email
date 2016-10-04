@@ -23,7 +23,7 @@ init > <stack@bar>;
 !<user@bar> {
 	"^start$" {
 		(eq, get_pop, foo, bar) > <cmp@std.com>;
-		(eq, get_pop, bar, bar) > <cmp@std.com>;
+		(neq, get_pop, bar, bar) > <cmp@std.com>;
 	}
 	"^get_pop$" {
 		(print, "Popped: ", @content) > <io@std.com>;
