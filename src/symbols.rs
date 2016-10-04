@@ -3,7 +3,6 @@ use types::Type;
 use error;
 use parser;
 use parser::Parser;
-use std::fmt;
 
 #[derive(Clone)]
 pub struct Block(pub Vec<SymbolDef>);
@@ -64,6 +63,9 @@ pub enum Symbol {
 	Semicolon,
 	Index(isize),
 	Slice(Option<isize>, Option<isize>),
+	If,
+	Else,
+	ElseIf,
 	// Operators
 	Define,
 	Arrow,
@@ -76,27 +78,6 @@ pub enum Symbol {
 pub struct SymbolDef {
 	pub errfactory: error::ErrorFactory,
 	pub symbol: Symbol
-}
-
-impl fmt::Debug for SymbolDef {
-	fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-		write!(f, "{}", match self.symbol {
-			Symbol::CurlyBraced(_) => "CurlyBraced",
-			Symbol::Parenthesis(_) => "Parenthesis",
-			Symbol::UserPath(_) => "Userpath",
-			Symbol::Identifier(_) => "Identifier",
-			Symbol::Text(_) => "Text",
-			Symbol::Comma => "Comma",
-			Symbol::Semicolon => "Semicolon",
-			Symbol::Receive => "Receiver",
-			Symbol::Define => "Define",
-			Symbol::Arrow => "Arrow",
-			Symbol::Addition => "Addition",
-			Symbol::Slice(_,_) => "Slice",
-			Symbol::Index(_) => "Index",
-			Symbol::Assign => "Assignment"
-		})
-	}
 }
 
 #[derive(Clone, Copy)]

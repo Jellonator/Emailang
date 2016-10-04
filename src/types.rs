@@ -14,6 +14,17 @@ pub enum Type {
 }
 
 impl Type {
+	pub fn get_bool(&self, inter: &mut Interpreter, env: &mut Environment) -> bool {
+		match *self {
+			Type::Null => false,
+			Type::Text(ref s) => {
+				!["false", "0", ""].contains(&s.to_lowercase().as_str())
+			},
+			Type::Expression(_) => self.resolve(inter, env).get_bool(inter, env),
+			_ => true
+		}
+	}
+
 	pub fn resolve(&self, inter: &mut Interpreter, env: &mut Environment) -> Type {
 		match *self {
 			Type::Expression(ref exp) => {

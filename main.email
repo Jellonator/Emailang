@@ -1,32 +1,20 @@
 !bar;
-!<stack@bar> {
-	"^init$" {
-		data = (,);
-	}
-	"^push$" {
-		data = @data + (@content) + (@attachments);
-	}
-	"^print$" {
-		print + @data > <io@std.com>;
-	}
-	"^empty$" {
-
-	}
-	"^pop$" {
-		(@content, @data[-1]) > @sender;
-		data = @data[0:-1];
-	}
-};
-
-init > <stack@bar>;
 
 !<user@bar> {
 	"^start$" {
-		(eq, get_pop, foo, bar) > <cmp@std.com>;
-		(neq, get_pop, bar, bar) > <cmp@std.com>;
+		(thing, false, false) > <user@bar>;
+		(thing, false, true) > <user@bar>;
+		(thing, true, false) > <user@bar>;
+		(thing, true, true) > <user@bar>;
 	}
-	"^get_pop$" {
-		(print, "Popped: ", @content) > <io@std.com>;
+	"^thing$" {
+		if @content {
+			(print, "A") > <io@std.com>;
+		} elif @attachments[0] {
+			(print, "B") > <io@std.com>;
+		} else {
+			(print, "C") > <io@std.com>;
+		};
 	}
 };
 

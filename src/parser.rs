@@ -2,6 +2,7 @@ use symbols;
 use symbols::{Symbol, SymbolDef};
 use std::str::Chars;
 use instruction::Instruction;
+use instruction::CondBlock;
 use user::*;
 use std::slice::Iter;
 use types::Type;
@@ -141,6 +142,71 @@ impl Parser {
 		ret
 	}
 
+	pub fn parse_ifblock(&self, symbols: &[SymbolDef]) -> Option<Instruction> {
+		let mut blocks = Vec::new();
+		let mut from_pos = 0;
+		for i in 1..symbols.len() {
+			match symbols[i].symbol {
+				Symbol::If | Symbol::ElseIf | Symbol::Else => {
+					blocks.push(&symbols[from_pos..i]);
+					from_pos = i;
+				}, _ => {}
+			}
+		}
+		blocks.push(&symbols[from_pos..]);
+
+		let mut ifblk = None;
+
+		for block in &blocks {
+			let blklen = block.len();
+			match block[0].symbol {
+				Symbol::If | Symbol::ElseIf => {
+					let exp = &block[1..blklen-1];
+					let curlybracket = match block.last().unwrap().symbol {
+						Symbol::CurlyBraced(ref b) => &b.0,
+						_ => panic!()
+					};
+
+					if let Symbol::If = block[0].symbol {
+						assert!(ifblk.is_none());
+						ifblk = Some(CondBlock {
+							cond: Some(self.parse_type(&exp)),
+							block: self.parse_symbols(&curlybracket),
+							elseblock: None
+						});
+					} else {
+						assert!(ifblk.is_some());
+						ifblk.as_mut().unwrap().append_block(CondBlock {
+							cond: Some(self.parse_type(&exp)),
+							block: self.parse_symbols(&curlybracket),
+							elseblock: None
+						});
+					}
+				},
+				Symbol::Else => {
+					let exp = &block[1..];
+					assert!(exp.len() == 1);
+					let curlybracket = match block.last().unwrap().symbol {
+						Symbol::CurlyBraced(ref b) => &b.0,
+						_ => panic!()
+					};
+					assert!(ifblk.is_some());
+					ifblk.as_mut().unwrap().append_block(CondBlock {
+						cond: None,
+						block: self.parse_symbols(&curlybracket),
+						elseblock: None
+					});
+				},
+				_ => panic!()
+			}
+		}
+
+		match ifblk {
+			Some(val) => Some(Instruction::IfBlock(val)),
+			None => None
+		}
+	}
+
 	pub fn parse_string(&self, code: &str, fname: &str) -> Vec<SymbolDef> {
 		let mut ret = Vec::new();
 		let mut chars = code.chars();
@@ -210,7 +276,12 @@ impl Parser {
 			};
 			if text.len() > 0 {
 				ret.push(SymbolDef{
-					symbol: Symbol::Identifier(text),
+					symbol: match text.as_str() {
+						"if" => Symbol::If,
+						"else" => Symbol::Else,
+						"elif" => Symbol::ElseIf,
+						other => Symbol::Identifier(other.to_string()),
+					},
 					errfactory: ErrorFactory {
 						line: line,
 						file: fname.to_string()
@@ -318,6 +389,8 @@ impl Parser {
 					},
 					_ => panic!("Unexpected Identifier")
 				}
+			} else if let Symbol::If = chunk[0].symbol {
+				self.parse_ifblock(&chunk).unwrap()
 			} else {
 				// expressions
 				self.parse_expression(&chunk).unwrap()

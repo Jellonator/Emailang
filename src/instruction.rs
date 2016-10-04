@@ -5,6 +5,38 @@ use interpreter::Interpreter;
 use types::Type;
 use environment::Environment;
 
+#[derive(Debug, Clone)]
+pub struct CondBlock {
+	pub cond: Option<Type>,
+	pub block: Vec<Instruction>,
+	pub elseblock: Option<Box<CondBlock>>
+}
+
+impl CondBlock {
+	pub fn append_block(&mut self, condblock: CondBlock) {
+		if let None = self.elseblock {
+			self.elseblock = Some(Box::new(condblock));
+		} else {
+			self.elseblock.as_mut().unwrap().append_block(condblock);
+		}
+	}
+	
+	pub fn call(&self, inter: &mut Interpreter, env: &mut Environment) {
+		let do_thing = match self.cond {
+			None => true,
+			Some(ref t) => t.get_bool(inter, env)
+		};
+		if do_thing {
+			inter.run(&self.block, env);
+		} else {
+			match self.elseblock {
+				Some(ref eb) => eb.call(inter, env),
+				None => {}
+			}
+		}
+	}
+}
+
 #[derive(Clone, Debug)]
 pub enum Instruction {
 	CreateServer(String),
@@ -14,11 +46,12 @@ pub enum Instruction {
 	GetEnv(Type),
 	Slice(Type, Option<isize>, Option<isize>),
 	Index(Type, isize),
-	Assign(Type, Type)
+	Assign(Type, Type),
+	IfBlock(CondBlock)
 }
 
 impl Instruction {
-	pub fn call(&self, mut inter: &mut Interpreter, mut env: &mut Environment) -> Type {
+	pub fn call(&self, inter: &mut Interpreter, env: &mut Environment) -> Type {
 		match *self {
 			Instruction::CreateServer(ref name) => {
 				inter.add_server(name);
@@ -27,8 +60,8 @@ impl Instruction {
 				inter.add_user(name, user);
 			},
 			Instruction::MailTo(ref draft, ref name) => {
-				let d = draft.get_draft(&mut inter, &mut env).unwrap();
-				let target = name.get_user(&mut inter, &mut env).unwrap();
+				let d = draft.get_draft(inter, env).unwrap();
+				let target = name.get_user(inter, env).unwrap();
 				inter.mail(&Mail {
 					subject: d.subject,
 					message: d.message,
@@ -39,27 +72,27 @@ impl Instruction {
 				return draft.clone();
 			},
 			Instruction::Concatenate(ref lval, ref rval) => {
-				let lstr = lval.get_string(&mut inter, &mut env);
-				let rstr = rval.get_string(&mut inter, &mut env);
+				let lstr = lval.get_string(inter, env);
+				let rstr = rval.get_string(inter, env);
 				match (lstr, rstr) {
 					(Some(ref lstringval), Some(ref rstringval)) => {
 						return Type::Text(lstringval.clone() + rstringval);
 					},
 					(None, Some(_)) => {
-						let mut tleft = lval.get_tuple(&mut inter, &mut env).unwrap();
+						let mut tleft = lval.get_tuple(inter, env).unwrap();
 						tleft.push(rval.clone());
 						return Type::Tuple(tleft);
 					},
 					(Some(_), None) => {
-						let mut tright = rval.get_tuple(&mut inter, &mut env).unwrap();
+						let mut tright = rval.get_tuple(inter, env).unwrap();
 						let mut tleft:Vec<Type> = Vec::new();
 						tleft.push(lval.clone());
 						tleft.append(&mut tright);
 						return Type::Tuple(tleft);
 					},
 					(None, None) => {
-						let mut tleft = lval.get_tuple(&mut inter, &mut env).unwrap();
-						let mut tright = rval.get_tuple(&mut inter, &mut env).unwrap();
+						let mut tleft = lval.get_tuple(inter, env).unwrap();
+						let mut tright = rval.get_tuple(inter, env).unwrap();
 						tleft.append(&mut tright);
 						return Type::Tuple(tleft);
 					},
@@ -112,6 +145,9 @@ impl Instruction {
 						}
 					}
 				}
+			},
+			Instruction::IfBlock(ref b) => {
+				b.call(inter, env);
 			}
 		}
 		Type::Null
