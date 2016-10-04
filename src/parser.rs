@@ -74,6 +74,9 @@ pub fn take_until_matched(chars: &mut Chars, begin: char, end: char, target_leve
 }
 
 pub fn take_symbols_until_semicolon(symbols: &mut Iter<SymbolDef>) -> Vec<SymbolDef> {
+	if symbols.len() == 0 {
+		return Vec::new();
+	}
 	let mut ret:Vec<SymbolDef> = Vec::new();
 	loop {
 		match symbols.next() {
