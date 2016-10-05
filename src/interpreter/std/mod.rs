@@ -2,6 +2,7 @@ use interpreter::Interpreter;
 mod stdcmp;
 mod stdio;
 mod stdloop;
+mod stdmath;
 
 pub fn create_std_lib(inter: &mut Interpreter) {
 	inter.add_server("std.com");
@@ -14,6 +15,9 @@ pub fn create_std_lib(inter: &mut Interpreter) {
 
 	// Boolean tests
 	inter.add_user("std.com", &stdcmp::create());
+
+	// Math
+	inter.add_user("std.com", &stdmath::create());
 
 	inter.handle_pending();
 }

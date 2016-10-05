@@ -23,9 +23,15 @@
 	"^input$" {
 		code = @content;
 		pos = "0";
+		(add, foo, 13, 27, -5, -11, 0) > <math@std.com>; # 24
+		(mul, foo, 2, 4, 3, -5) > <math@std.com>; # -120
+		(div, foo, 100, 5, -2) > <math@std.com>; # -10
 	}
 	"^run$" {
 		pos = "0";
+	}
+	"^foo$" {
+		(print, @content) > <io@std.com>;
 	}
 };
 
