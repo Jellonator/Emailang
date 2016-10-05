@@ -35,12 +35,15 @@ pub fn take_until_unescaped(chars: &mut Chars, m: char) -> String {
 		match n {
 			None => break,
 			Some(other) => {
-				if other == '\\' {
+				if other == '\\' && is_esc {
 					is_esc = true;
-				} else if other == m {
-					if !is_esc {
-						break
+				} else {
+					if other == m {
+						if !is_esc {
+							break
+						}
 					}
+					is_esc = false;
 				}
 				ret.push(other);
 			}
@@ -240,6 +243,7 @@ impl Parser {
 				'+' => Symbol::Addition,
 				'@' => Symbol::Receive,
 				'=' => Symbol::Assign,
+				'|' => Symbol::Modifier,
 				'<' => {
 					let path = take_until(&mut chars, '>');
 					let pos = path.find('@').unwrap();
@@ -266,11 +270,16 @@ impl Parser {
 						},
 						Some(pos) => {
 							let val1 = &indexcontents[..pos];
+							let val1 = match val1.trim() {
+								"" => None,
+								other => Some(symbols::Block(self.parse_string(&other, fname)))
+							};
 							let val2 = &indexcontents[pos+1..];
-							Symbol::Slice(
-								Some(symbols::Block(self.parse_string(&val1, fname))),
-								Some(symbols::Block(self.parse_string(&val2, fname)))
-							)
+							let val2 = match val2.trim() {
+								"" => None,
+								other => Some(symbols::Block(self.parse_string(&other, fname)))
+							};
+							Symbol::Slice(val1, val2)
 						}
 					}
 				},
@@ -368,6 +377,9 @@ impl Parser {
 				Symbol::Assign => {
 					Some(Instruction::Assign(preval, postval))
 				},
+				Symbol::Modifier => {
+					Some(Instruction::Modify(preval, postval))
+				}
 				_ => None
 			}
 		} else {

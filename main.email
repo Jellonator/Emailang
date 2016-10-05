@@ -18,6 +18,13 @@
 		data = @data[1:] + @data[0];
 		(@content) > @sender;
 	}
+	"^get$" {
+		return = (@content, @sender);
+		(cmp, cmp_ret, @data[0], "0") > <cmp@std.com>;
+	}
+	"^get_ret$" {
+		(@return[0], @content) > @return[1];
+	}
 	"^add$" {
 		return = (@content, @sender);
 		(add, add_ret, @data[0]) + @attachments > <math@std.com>;
@@ -32,8 +39,18 @@
 
 !<parser@bf> {
 	"^input$" {
-		code = @content + "!";
+		code = (,);
+		(iterate, input_char) +
+			@content
+			|chars
+			|(filter, "[\+-><\[\]\.,]")
+			+ ("!",)
+			> <loop@std.com>;
 		pos = "0";
+	}
+	"^input_char$" {
+		(print, @content) > <io@std.com>;
+		code = @code + @content;
 	}
 	"^start$" {
 		pos = "0";
@@ -42,81 +59,45 @@
 	"^loop_begin$" {
 		ismatch = false;
 		char = @code[@pos];
-		(eq, inst_next, ">", @char) > <cmp@std.com>;
-		(eq, inst_prev, "<", @char) > <cmp@std.com>;
-		(eq, inst_inc, "+", @char) > <cmp@std.com>;
-		(eq, inst_dec, "-", @char) > <cmp@std.com>;
-		(eq, inst_loopb, "[", @char) > <cmp@std.com>;
-		(eq, inst_loope, "]", @char) > <cmp@std.com>;
-		(eq, inst_print, ".", @char) > <cmp@std.com>;
-		(eq, inst_input, ",", @char) > <cmp@std.com>;
-		(eq, inst_end, "!", @char) > <cmp@std.com>;
+		if   @char|(filter, "\+") {
+			(print, add) > <io@std.com>;
+
+		} elif @char|(filter,  "-") {
+			(print, sub) > <io@std.com>;
+
+		} elif @char|(filter,  ">") {
+			(print, next) > <io@std.com>;
+
+		} elif @char|(filter,  "<") {
+			(print, prev) > <io@std.com>;
+
+		} elif @char|(filter, "\[") {
+			(print, loop_begin) > <io@std.com>;
+
+		} elif @char|(filter, "\]") {
+			(print, loop_end) > <io@std.com>;
+
+		} elif @char|(filter, "\.") {
+			(print, print) > <io@std.com>; 
+
+		} elif @char|(filter,  ",") {
+			(print, input) > <io@std.com>;
+
+		} elif @char|(filter,  "!") {
+			(print, NONE, @char) > <io@std.com>;
+			stop = true;
+		};
+
+		loop_end > @self;
 	}
 	"^loop_end$" {
-		(add, loop_end_result, @pos, 1) > <math@std.com>;
+		if @stop {} else {
+			(add, loop_end_result, @pos, 1) > <math@std.com>;
+		};
 	}
 	"^loop_end_result$" {
 		pos = @content;
-		"loop_begin" > @self;
-	}
-	"^inst_end$" {
-		if @content {
-			ismatch = true;
-		};
-	}
-	"^inst_next$" {
-		if @content {
-			next > <values@bf>;
-			(add, loop_end, 1) > <values@bf>;
-			ismatch = true;
-		};
-	}
-	"^inst_prev$" {
-		if @content {
-			prev > <values@bf>;
-			ismatch = true;
-		};
-	}
-	"^inst_inc$" {
-		if @content {
-			ismatch = true;
-			(add, loop_end, 1) > <values@bf>;
-		};
-	}
-	"^inst_dec$" {
-		if @content {
-			ismatch = true;
-			(add, loop_end, -1) > <values@bf>;
-		};
-	}
-	"^inst_loopb$" {
-		if @content {
-			ismatch = true;
-			loop_end > @self;
-		};
-	}
-	"^inst_loope$" {
-		if @content {
-			ismatch = true;
-			loop_end > @self;
-		};
-	}
-	"^inst_print$" {
-		if @content {
-			ismatch = true;
-			loop_end > @self;
-		};
-	}
-	"^inst_input$" {
-		if @content {
-			ismatch = true;
-			loop_end > @self;
-		};
-	}
-	"^inst_null$" {
-		if @ismatch {} else {
-			loop_end > @self;
-		};
+		loop_begin > @self;
 	}
 };
 

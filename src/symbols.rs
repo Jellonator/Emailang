@@ -72,6 +72,7 @@ pub enum Symbol {
 	Addition,
 	Receive,
 	Assign,
+	Modifier,
 }
 
 #[derive(Clone, Debug)]
@@ -152,8 +153,9 @@ impl Symbol {
 			Symbol::Arrow      => OperatorType::LeftToRight(1001),
 			Symbol::Addition   => OperatorType::LeftToRight(1000),
 			// Modifier operators
-			Symbol::Slice(_,_) => OperatorType::LeftToRight(2),
-			Symbol::Index(_)   => OperatorType::LeftToRight(2),
+			Symbol::Modifier   => OperatorType::RightToLeft(3),
+			Symbol::Slice(_,_) => OperatorType::RightToLeft(2),
+			Symbol::Index(_)   => OperatorType::RightToLeft(2),
 			Symbol::Receive    => OperatorType::LeftToRight(1),
 			_ => OperatorType::Neither
 		}

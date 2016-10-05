@@ -4,6 +4,7 @@ use interpreter::Interpreter;
 use mail::Draft;
 use environment::Environment;
 use std::str::FromStr;
+use regex;
 
 #[derive(Clone, Debug)]
 pub enum Type {
@@ -24,12 +25,63 @@ impl Type {
 		}
 	}
 
+	fn get_modname(&self, inter: &mut Interpreter, env: &mut Environment) -> String {
+		match *self {
+			Type::Text(ref s) => s.clone(),
+			Type::Tuple(ref t) => t[0].get_string(inter, env).unwrap(),
+			Type::Expression(_) => self.resolve(inter, env).get_modname(inter, env),
+			_ => panic!()
+		}
+	}
+
+	fn get_modargs(&self, inter: &mut Interpreter, env: &mut Environment) -> Vec<Type> {
+		match *self {
+			Type::Text(_) => Vec::new(),
+			Type::Tuple(ref t) => t[1..].to_vec(),
+			Type::Expression(_) => self.resolve(inter, env).get_modargs(inter, env),
+			_ => panic!()
+		}
+	}
+
+	pub fn modify(&self, other: &Type, inter: &mut Interpreter, env: &mut Environment) -> Option<Type> {
+		let mod_name = self.get_modname(inter, env);
+		let mod_args = self.get_modargs(inter, env);
+		match mod_name.as_str() {
+			"chars" => { // Turn a string into a tuple of characters
+				assert!(mod_args.len() == 0);
+				Some(Type::Tuple(other.get_string(inter, env).unwrap().chars()
+					.map(|v|Type::Text(v.to_string())).collect()))
+			},
+			"merge" => {
+				assert!(mod_args.len() == 0);
+				Some(Type::Text(
+					other.unpack(inter, env).iter()
+					.map(|v|v.get_string(inter, env).unwrap())
+					.collect::<String>()
+				))
+			},
+			"filter" => {
+				assert!(mod_args.len() == 1);
+				let r = regex::Regex::new(&mod_args[0].get_string(inter, env).unwrap()).unwrap();
+				Some(Type::Tuple(
+					other.unpack(inter, env).iter()
+					.map(|v|v.get_string(inter, env).unwrap())
+					.filter(|v|r.is_match(&v))
+					.map(|v|Type::Text(v))
+					.collect()
+				))
+			},
+			_ => None
+		}
+	}
+
 	pub fn get_bool(&self, inter: &mut Interpreter, env: &mut Environment) -> bool {
 		match *self {
 			Type::Null => false,
 			Type::Text(ref s) => {
 				!["false", "0", ""].contains(&s.to_lowercase().as_str())
 			},
+			Type::Tuple(ref t) => t.len() > 0,
 			Type::Expression(_) => self.resolve(inter, env).get_bool(inter, env),
 			_ => true
 		}
@@ -126,6 +178,13 @@ impl Type {
 			Type::Tuple(ref v) => Some(v.clone()),
 			Type::Expression(_) => self.resolve(inter, env).get_tuple(inter, env),
 			_ => None
+		}
+	}
+
+	pub fn unpack(&self, inter: &mut Interpreter, env: &mut Environment) -> Vec<Type> {
+		match self.get_tuple(inter, env) {
+			Some(v) => v,
+			None => vec![self.clone()]
 		}
 	}
 

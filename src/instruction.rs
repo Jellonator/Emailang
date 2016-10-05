@@ -47,7 +47,8 @@ pub enum Instruction {
 	Slice(Type, Option<Type>, Option<Type>),
 	Index(Type, Type),
 	Assign(Type, Type),
-	IfBlock(CondBlock)
+	IfBlock(CondBlock),
+	Modify(Type, Type)
 }
 
 impl Instruction {
@@ -148,6 +149,9 @@ impl Instruction {
 			},
 			Instruction::IfBlock(ref b) => {
 				b.call(inter, env);
+			},
+			Instruction::Modify(ref val, ref modifier) => {
+				return modifier.modify(val, inter, env).unwrap();
 			}
 		}
 		Type::Null

@@ -6,7 +6,7 @@ use std::fmt;
 use types::Type;
 use environment::Environment;
 use server::Server;
-extern crate regex;
+use regex;
 
 #[derive(Clone, Debug)]
 pub struct UserPath(pub String, pub String);
