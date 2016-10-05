@@ -61,8 +61,8 @@ pub enum Symbol {
 	// Syntax
 	Comma,
 	Semicolon,
-	Index(isize),
-	Slice(Option<isize>, Option<isize>),
+	Index(Block),
+	Slice(Option<Block>, Option<Block>),
 	If,
 	Else,
 	ElseIf,

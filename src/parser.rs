@@ -261,14 +261,15 @@ impl Parser {
 					let indexcontents = take_until(&mut chars, ']');
 					match indexcontents.find(':') {
 						None => {
-							Symbol::Index(indexcontents.parse::<isize>().unwrap())
+							Symbol::Index(symbols::Block(
+								self.parse_string(&indexcontents, fname)))
 						},
 						Some(pos) => {
 							let val1 = &indexcontents[..pos];
 							let val2 = &indexcontents[pos+1..];
 							Symbol::Slice(
-								Some(val1.parse::<isize>().unwrap()),
-								Some(val2.parse::<isize>().unwrap())
+								Some(symbols::Block(self.parse_string(&val1, fname))),
+								Some(symbols::Block(self.parse_string(&val2, fname)))
 							)
 						}
 					}
@@ -280,7 +281,7 @@ impl Parser {
 				other => {
 					if other == '\n' {
 						line += 1;
-					} else if other.is_alphanumeric() || ['.', '@', '_'].contains(&other) {
+					} else if other.is_alphanumeric() || ['.', '@', '_', '-'].contains(&other) {
 						text.push(other);
 					} else if !other.is_whitespace() {
 						panic!("{} is not a valid character!", other);
@@ -354,13 +355,15 @@ impl Parser {
 					assert!(preval.is_null());
 					Some(Instruction::GetEnv(postval))
 				},
-				Symbol::Slice(pos1, pos2) => {
+				Symbol::Slice(ref pos1, ref pos2) => {
 					assert!(postval.is_null());
-					Some(Instruction::Slice(preval, pos1, pos2))
+					Some(Instruction::Slice(preval,
+						pos1.as_ref().map(|v|self.parse_type(&v.0)),
+						pos2.as_ref().map(|v|self.parse_type(&v.0))))
 				},
-				Symbol::Index(pos) => {
+				Symbol::Index(ref pos) => {
 					assert!(postval.is_null());
-					Some(Instruction::Index(preval, pos))
+					Some(Instruction::Index(preval, self.parse_type(&pos.0)))
 				},
 				Symbol::Assign => {
 					Some(Instruction::Assign(preval, postval))

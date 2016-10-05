@@ -20,7 +20,7 @@ impl CondBlock {
 			self.elseblock.as_mut().unwrap().append_block(condblock);
 		}
 	}
-	
+
 	pub fn call(&self, inter: &mut Interpreter, env: &mut Environment) {
 		let do_thing = match self.cond {
 			None => true,
@@ -44,8 +44,8 @@ pub enum Instruction {
 	MailTo(Type, Type),
 	Concatenate(Type, Type),
 	GetEnv(Type),
-	Slice(Type, Option<isize>, Option<isize>),
-	Index(Type, isize),
+	Slice(Type, Option<Type>, Option<Type>),
+	Index(Type, Type),
 	Assign(Type, Type),
 	IfBlock(CondBlock)
 }
@@ -111,16 +111,16 @@ impl Instruction {
 					panic!();
 				};
 			},
-			Instruction::Index(ref val, pos) => {
-				return val.index(pos, inter, env).unwrap();
+			Instruction::Index(ref val, ref pos) => {
+				return val.index(pos.get_num(inter, env).unwrap(), inter, env).unwrap();
 			},
-			Instruction::Slice(ref val, a, b) => {
-				let start = match a {
-					Some(val) => val,
+			Instruction::Slice(ref val, ref a, ref b) => {
+				let start = match *a {
+					Some(ref val) => val.get_num(inter, env).unwrap(),
 					None => 0
 				};
-				let end = match b {
-					Some(val) => val,
+				let end = match *b {
+					Some(ref val) => val.get_num(inter, env).unwrap(),
 					None => val.len(inter, env).unwrap() as isize
 				};
 				return val.slice(start, end, inter, env).unwrap();

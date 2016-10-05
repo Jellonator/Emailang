@@ -1,21 +1,34 @@
-!bar;
+!bf;
 
-!<user@bar> {
-	"^start$" {
-		(thing, false, false) > <user@bar>;
-		(thing, false, true) > <user@bar>;
-		(thing, true, false) > <user@bar>;
-		(thing, true, true) > <user@bar>;
+!<values@bf> {
+	"^init$" {
+		# Note that these are all still strings
+		data = ("0","0","0","0","0","0","0","0"); # 8
+		data = @data + @data; # 16
+		data = @data + @data; # 32
+		data = @data + @data; # 64
+		data = @data + @data; # 128
+		data = @data + @data; # 256
 	}
-	"^thing$" {
-		if @content {
-			(print, "A") > <io@std.com>;
-		} elif @attachments[0] {
-			(print, "B") > <io@std.com>;
-		} else {
-			(print, "C") > <io@std.com>;
-		};
+	"^next$" {
+		data = @data[-1] + @data[:-1];
+	}
+	"^prev$" {
+		data = @data[1:] + @data[0];
+	}
+};
+"init" > <values@bf>;
+
+!<parser@bf> {
+	"^input$" {
+		code = @content;
+		pos = "0";
+	}
+	"^run$" {
+		pos = "0";
 	}
 };
 
-"start" > <user@bar>;
+"init" > <values@bf>;
+(input,
+"++++++++++[>+++++++>++++++++++>+++>+<<<<-]>++.>+.+++++++..+++.>++.<<+++++++++++++++.>.+++.------.--------.>+.>.") > <parser@bf>;

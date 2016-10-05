@@ -3,6 +3,7 @@ use instruction::Instruction;
 use interpreter::Interpreter;
 use mail::Draft;
 use environment::Environment;
+use std::str::FromStr;
 
 #[derive(Clone, Debug)]
 pub enum Type {
@@ -14,6 +15,15 @@ pub enum Type {
 }
 
 impl Type {
+	pub fn get_num<T>(&self, inter: &mut Interpreter, env: &mut Environment) -> Option<T>
+	where T: FromStr {
+		match *self {
+			Type::Text(ref s) => s.parse::<T>().ok(),
+			Type::Expression(_) => self.resolve(inter, env).get_num(inter, env),
+			_ => None
+		}
+	}
+
 	pub fn get_bool(&self, inter: &mut Interpreter, env: &mut Environment) -> bool {
 		match *self {
 			Type::Null => false,
@@ -77,7 +87,7 @@ impl Type {
 			Type::Tuple(ref vec) => Some(Type::Tuple(vec[a..b].to_vec())),
 			Type::Text(ref text) => {
 				let chars = text.chars();
-				Some(Type::Text(chars.skip(a as usize).take(b-a).collect()))
+				Some(Type::Text(chars.skip(a).take(b-a).collect()))
 			},
 			Type::Expression(_) => self.resolve(inter, env)
 				.slice(a as isize, b as isize, inter, env),
