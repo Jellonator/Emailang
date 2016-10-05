@@ -58,6 +58,7 @@ impl User {
 		self.env.set("subject", Type::Text(mail.subject.clone()));
 		self.env.set("content", Type::Text(mail.message.clone()));
 		self.env.set("sender", Type::UserPath(mail.from.clone()));
+		self.env.set("self", Type::UserPath(UserPath(self.name.clone(), server.name.clone())));
 		self.env.set("attachments", Type::Tuple(mail.attachments
 			.iter()
 			.map(|v|Type::Text(v.clone()))
