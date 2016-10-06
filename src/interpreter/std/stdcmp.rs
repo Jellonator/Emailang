@@ -5,7 +5,7 @@ use mail::Mail;
 fn func(user: &User, inter: &mut Interpreter, mail: &Mail) {
 	match mail.subject.as_ref() {
 		"eq" => {
-			inter.send_mail(&user.create_mail(mail.from.clone(), &mail.message,
+			inter.mail(user.create_mail(mail.from.clone(), &mail.message,
 				match mail.attachments.get(0) == mail.attachments.get(1) {
 					true => "true",
 					false => "false"
@@ -13,7 +13,7 @@ fn func(user: &User, inter: &mut Interpreter, mail: &Mail) {
 			));
 		},
 		"neq" => {
-			inter.send_mail(&user.create_mail(mail.from.clone(), &mail.message,
+			inter.mail(user.create_mail(mail.from.clone(), &mail.message,
 				match mail.attachments.get(0) != mail.attachments.get(1) {
 					true => "true",
 					false => "false"

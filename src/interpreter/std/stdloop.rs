@@ -6,7 +6,7 @@ fn func(user: &User, inter: &mut Interpreter, mail: &Mail) {
 	match mail.subject.as_ref() {
 		"iterate" => { // Iterate through all attachments
 			for a in &mail.attachments {
-				inter.send_mail(&user.create_mail(mail.from.clone(), &mail.message, &a));
+				inter.mail(user.create_mail(mail.from.clone(), &mail.message, &a));
 			}
 		},
 		o => println!("Bad loop function {}!", o)

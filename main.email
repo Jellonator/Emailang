@@ -10,13 +10,17 @@
 		data = @data + @data; # 128
 		data = @data + @data; # 256
 	}
+	"^print$" {
+		(char, print_chr, @data[0]) > <math@std.com>;
+	}
+	"^print_chr$" {
+		(print, @content) > <io@std.com>;
+	}
 	"^next$" {
 		data = @data[-1] + @data[:-1];
-		(@content) > @sender;
 	}
 	"^prev$" {
 		data = @data[1:] + @data[0];
-		(@content) > @sender;
 	}
 	"^get$" {
 		return = (@content, @sender);
@@ -26,12 +30,10 @@
 		(@return[0], @content) > @return[1];
 	}
 	"^add$" {
-		return = (@content, @sender);
-		(add, add_ret, @data[0]) + @attachments > <math@std.com>;
+		(add, add_ret, @data[0], @content) > <math@std.com>;
 	}
 	"^add_ret$" {
 		data = @content + @data[1:];
-		@return[0] > @return[1];
 	}
 
 };
@@ -39,46 +41,64 @@
 
 !<parser@bf> {
 	"^input$" {
-		code = (,);
-		(iterate, input_char) +
-			@content
-			|chars
-			|(filter, "[\+-><\[\]\.,]")
-			+ ("!",)
-			> <loop@std.com>;
+		code = @content
+		       |chars
+		       |(filter, "[\+-><\[\]\.,]")
+		       + ("!",);
 		pos = "0";
-	}
-	"^input_char$" {
-		(print, @content) > <io@std.com>;
-		code = @code + @content;
 	}
 	"^start$" {
 		pos = "0";
 		loop_begin > @self;
 	}
+	"^do_loop_forward$" {
+		if @content { # Only go forward if TRUE
+			loop_end > @self;
+		} else {
+			loop_forwards > @self;
+		};
+	}
+	"^do_loop_backwards$" {
+		if @content { # Only go backwards if TRUE
+			loop_backwards > @self;
+		} else {
+			loop_end > @self;
+		};
+	}
+	"^loop_forwards$" {
+
+	}
+	"^loop_backwards$" {
+
+	}
 	"^loop_begin$" {
+		stop = false;
 		ismatch = false;
 		char = @code[@pos];
-		if   @char|(filter, "\+") {
-			(print, add) > <io@std.com>;
+		if @char|(filter, "\+") {
+			(add, "1") > <values@bf>;
 
 		} elif @char|(filter,  "-") {
-			(print, sub) > <io@std.com>;
+			(sub, "1") > <values@bf>;
 
 		} elif @char|(filter,  ">") {
-			(print, next) > <io@std.com>;
+			next > <values@bf>;
 
 		} elif @char|(filter,  "<") {
-			(print, prev) > <io@std.com>;
+			prev > <values@bf>;
 
 		} elif @char|(filter, "\[") {
-			(print, loop_begin) > <io@std.com>;
+			stop = true;
+			loop_stack = "|";
+			(get, do_loop_forward) > <values@bf>;
 
 		} elif @char|(filter, "\]") {
-			(print, loop_end) > <io@std.com>;
+			stop = true;
+			loop_stack = "|";
+			(get, do_loop_backwards) > <values@bf>;
 
 		} elif @char|(filter, "\.") {
-			(print, print) > <io@std.com>; 
+			print > <values@bf>;
 
 		} elif @char|(filter,  ",") {
 			(print, input) > <io@std.com>;

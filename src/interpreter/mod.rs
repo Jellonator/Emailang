@@ -34,9 +34,9 @@ impl Interpreter {
 		self.servers_to_add.push(server.to_string());
 	}
 
-	pub fn mail(&mut self, mail: &Mail) {
+	pub fn mail(&mut self, mail: Mail) {
 		// println!("Sending mail {} to {:?}!", mail.subject, mail.to);
-		self.pending.push(mail.clone());
+		self.pending.push(mail);
 	}
 
 	fn get_server(&mut self, name: &str) -> Option<&mut Server> {
@@ -48,7 +48,7 @@ impl Interpreter {
 		None
 	}
 
-	fn send_mail(&mut self, mail: &Mail) {
+	fn handle_sent_mail(&mut self, mail: &Mail) {
 		let tuser = &mail.to.0;
 		let tserver = &mail.to.1;
 
@@ -91,7 +91,7 @@ impl Interpreter {
 		}
 		let mail = self.pending.split_off(0);
 		for m in mail {
-			self.send_mail(&m);
+			self.handle_sent_mail(&m);
 		}
 
 		return true;

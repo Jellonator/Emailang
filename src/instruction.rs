@@ -63,7 +63,7 @@ impl Instruction {
 			Instruction::MailTo(ref draft, ref name) => {
 				let d = draft.get_draft(inter, env).unwrap();
 				let target = name.get_user(inter, env).unwrap();
-				inter.mail(&Mail {
+				inter.mail(Mail {
 					subject: d.subject,
 					message: d.message,
 					attachments: d.attachments.clone(),

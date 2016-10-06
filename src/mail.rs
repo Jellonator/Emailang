@@ -1,4 +1,5 @@
 use user::UserPath;
+use interpreter::Interpreter;
 
 #[derive(Clone)]
 pub struct Mail {
@@ -12,6 +13,16 @@ pub struct Mail {
 impl Mail {
 	pub fn attach(&mut self, val: &str) {
 		self.attachments.push(val.to_string())
+	}
+
+	pub fn return_mail(&self, inter: &mut Interpreter, subject: &str, message: &str, attachments: Vec<String>) {
+		inter.mail(Mail {
+			from: self.to.clone(),
+			to: self.from.clone(),
+			subject: subject.to_string(),
+			message: message.to_string(),
+			attachments: attachments
+		});
 	}
 }
 
