@@ -36,5 +36,7 @@ fn main() {
 	let instructions = p.parse_symbols(&symbols);
 	let mut inter = interpreter::Interpreter::new();
 
-	inter.run(&instructions, &mut environment::Environment::new_anon());
+	inter.execute(&instructions);
+
+	println!("");
 }

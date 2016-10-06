@@ -9,6 +9,12 @@ fn func(_: &User, _: &mut Interpreter, mail: &Mail) {
 			for val in &mail.attachments {
 				print!(" {}", val);
 			}
+		},
+		"println" => {
+			print!("{}", mail.message);
+			for val in &mail.attachments {
+				print!(" {}", val);
+			}
 			print!("\n");
 		},
 		o => println!("Bad io function {}!", o)

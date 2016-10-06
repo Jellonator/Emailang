@@ -24,7 +24,7 @@
 	}
 	"^get$" {
 		return = (@content, @sender);
-		(cmp, cmp_ret, @data[0], "0") > <cmp@std.com>;
+		(neq, get_ret, @data[0], "0") > <cmp@std.com>;
 	}
 	"^get_ret$" {
 		(@return[0], @content) > @return[1];
@@ -51,25 +51,47 @@
 		pos = "0";
 		loop_begin > @self;
 	}
-	"^do_loop_forward$" {
+	"^do_loop_forwards$" {
 		if @content { # Only go forward if TRUE
-			loop_end > @self;
+			restart_loop > @self;
 		} else {
-			loop_forwards > @self;
+			(add, loop_forwards, @pos, "1") > <math@std.com>;
 		};
 	}
 	"^do_loop_backwards$" {
 		if @content { # Only go backwards if TRUE
-			loop_backwards > @self;
+			(add, loop_backwards, @pos, "-1") > <math@std.com>;
 		} else {
-			loop_end > @self;
+			restart_loop > @self;
 		};
 	}
 	"^loop_forwards$" {
-
+		pos = @content;
+		char = @code[@pos];
+		if @char|(filter, "\[") {
+			loop_stack = @loop_stack + "|";
+		} elif @char|(filter, "\]") {
+			loop_stack = @loop_stack[1:];
+		};
+		if @loop_stack {
+			(add, loop_forwards, @pos, "1") > <math@std.com>;
+		} else {
+			restart_loop > @self;
+		};
 	}
 	"^loop_backwards$" {
-
+		pos = @content;
+		char = @code[@pos];
+		if @char|(filter, "\]") {
+			loop_stack = @loop_stack + "|";
+		} elif @char|(filter, "\[") {
+			loop_stack = @loop_stack[1:];
+		};
+		if @loop_stack {
+			(add, loop_backwards, @pos, "-1") > <math@std.com>;
+		} else {
+			restart_loop > @self;
+		};
 	}
 	"^loop_begin$" {
 		stop = false;
@@ -79,7 +101,7 @@
 			(add, "1") > <values@bf>;
 
 		} elif @char|(filter,  "-") {
-			(sub, "1") > <values@bf>;
+			(add, "-1") > <values@bf>;
 
 		} elif @char|(filter,  ">") {
 			next > <values@bf>;
@@ -90,7 +112,7 @@
 		} elif @char|(filter, "\[") {
 			stop = true;
 			loop_stack = "|";
-			(get, do_loop_forward) > <values@bf>;
+			(get, do_loop_forwards) > <values@bf>;
 
 		} elif @char|(filter, "\]") {
 			stop = true;
@@ -104,10 +126,14 @@
 			(print, input) > <io@std.com>;
 
 		} elif @char|(filter,  "!") {
-			(print, NONE, @char) > <io@std.com>;
+			#(print, NONE, @char) > <io@std.com>;
 			stop = true;
 		};
 
+		loop_end > @self;
+	}
+	"^restart_loop$" {
+		stop = false;
 		loop_end > @self;
 	}
 	"^loop_end$" {
@@ -122,6 +148,7 @@
 };
 
 (input,
-"++++++++++[>+++++++>++++++++++>+++>+<<<<-]>++.>+.+++++++..+++.>++.<<+++++++++++++++.>.+++.------.--------.>+.>."
+"++++++++++[>+++++++>++++++++++>+++>+<<<<-]
+>++.>+.+++++++..+++.>++.<<+++++++++++++++.>.+++.------.--------.>+.>."
 ) > <parser@bf>;
 "start" > <parser@bf>;

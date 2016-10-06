@@ -98,7 +98,6 @@ impl Interpreter {
 	}
 
 	pub fn run(&mut self, instructions: &Vec<Instruction>, env: &mut Environment) {
-		self.handle_pending();
 		let mut i = 0;
 		loop {
 			if i >= instructions.len() {
@@ -108,6 +107,12 @@ impl Interpreter {
 			i = i + 1;
 			inst.call(self, env);
 		}
+	}
+
+	pub fn execute(&mut self, instructions: &Vec<Instruction>) {
+		self.handle_pending();
+		let mut env = Environment::new_anon();
+		self.run(instructions, &mut env);
 		while self.handle_pending() {}
 	}
 }
