@@ -1,60 +1,56 @@
 use std::fmt;
 
 #[derive(Clone, Debug)]
-pub struct ErrorFactory {
+pub struct SyntaxErrorFactory {
 	pub line: usize,
-	pub file: String,
+	pub column: usize,
 }
 
-impl ErrorFactory {
-	pub fn new(file: String, line: usize) -> ErrorFactory {
-		ErrorFactory {
+impl SyntaxErrorFactory {
+	pub fn new(line: usize, column: usize) -> SyntaxErrorFactory {
+		SyntaxErrorFactory {
+			column: column,
 			line: line,
-			file: file
 		}
 	}
 
-	pub fn gen_error(&self, errtype: ErrorType, reason: String) -> Error {
-		Error {
-			errtype: errtype,
-			reason: reason,
+	pub fn gen_error(&self, errortype: SyntaxErrorType) -> SyntaxError {
+		SyntaxError {
+			errortype: errortype,
 			line: self.line,
-			file: self.file.clone()
+			column: self.column
 		}
 	}
 
-	pub fn throw(&self, errtype: ErrorType, reason: String) -> ! {
-		panic!("{}", self.gen_error(errtype, reason))
+	pub fn throw(&self, errortype: SyntaxErrorType) -> ! {
+		panic!("{}", self.gen_error(errortype))
 	}
 }
 
-pub struct Error {
-	pub errtype: ErrorType,
+pub enum SyntaxErrorType {
+	UnexpectedSymbol(char),
+	ExpectedSemicolon,
+	MalformedUserpath,
+}
+
+pub struct SyntaxError {
 	pub line: usize,
-	pub file: String,
-	pub reason: String,
+	pub column: usize,
+	pub errortype: SyntaxErrorType
 }
 
-impl fmt::Display for Error {
+impl fmt::Display for SyntaxError {
 	fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-		write!(f, "{} on line {} in file {}! {}", self.errtype, self.line, self.file, self.reason)
+		write!(f, "Syntax Error on line {}:{}! {}.", self.line, self.column, self.errortype)
 	}
 }
 
-pub enum ErrorType {
-	ParseError,
-	RuntimeError
-}
-
-impl fmt::Display for ErrorType {
+impl fmt::Display for SyntaxErrorType {
 	fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-		write!(f, "{}", match *self {
-			ErrorType::ParseError => {
-				"Parsing Error"
-			},
-			ErrorType::RuntimeError => {
-				"Runtime Error"
-			}
-		})
+		match *self {
+			SyntaxErrorType::UnexpectedSymbol(ref c) => write!(f, "Unexpected character '{}'", c),
+			SyntaxErrorType::ExpectedSemicolon => write!(f, "Expected semicolon"),
+			SyntaxErrorType::MalformedUserpath => write!(f, "Malformed Userpath")
+		}
 	}
 }

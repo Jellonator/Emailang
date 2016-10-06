@@ -31,10 +31,13 @@ fn run(fname: &str) {
 		Ok(_) => {}
 	};
 
-	let p = parser::Parser::new();
-	let symbols = p.parse_string(&contents, path.to_str().unwrap());
-
-	let instructions = p.parse_symbols(&symbols);
+	let instructions = match parser::parse(&contents, &fname) {
+		Ok(val) => val,
+		Err(err) => {
+			println!("{}", err);
+			return;
+		}
+	};
 	let mut inter = interpreter::Interpreter::new();
 
 	inter.execute(&instructions);

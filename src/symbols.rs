@@ -2,7 +2,7 @@ use user::UserPath;
 use types::Type;
 use error;
 use parser;
-use parser::Parser;
+use parser::symbolparser;
 
 #[derive(Clone, Debug)]
 pub struct Block(pub Vec<SymbolDef>);
@@ -77,7 +77,7 @@ pub enum Symbol {
 
 #[derive(Clone, Debug)]
 pub struct SymbolDef {
-	pub errfactory: error::ErrorFactory,
+	pub errfactory: error::SyntaxErrorFactory,
 	pub symbol: Symbol
 }
 
@@ -113,7 +113,7 @@ impl OperatorType {
 }
 
 impl Symbol {
-	pub fn get_type(&self, parser: &Parser) -> Option<Type> {
+	pub fn get_type(&self) -> Option<Type> {
 		match *self {
 			Symbol::Text(ref val) => Some(Type::Text(val.clone())),
 			Symbol::Identifier(ref val) => Some(Type::Text(val.clone())),
@@ -122,21 +122,21 @@ impl Symbol {
 				if val.is_comma_delimited() {
 					let mut tuple = Vec::new();
 					for v in val.split_commas() {
-						if parser::is_expression(&v) {
-							tuple.push(Type::Expression(Box::new(parser.parse_expression(&v).unwrap())));
+						if parser::symbolparser::is_expression(&v) {
+							tuple.push(Type::Expression(Box::new(symbolparser::parse_expression(&v).unwrap())));
 						} else {
 							for symdef in v {
-								tuple.push(symdef.symbol.get_type(&parser).unwrap());
+								tuple.push(symdef.symbol.get_type().unwrap());
 							}
 						}
 					}
 					Some(Type::Tuple(tuple))
 				} else {
-					if parser::is_expression(&val.0) {
-						Some(Type::Expression(Box::new(parser.parse_expression(&val.0).unwrap())))
+					if symbolparser::is_expression(&val.0) {
+						Some(Type::Expression(Box::new(symbolparser::parse_expression(&val.0).unwrap())))
 					} else {
 						assert!(val.0.len() == 1);
-						Some(val.0[0].symbol.get_type(&parser).unwrap())
+						Some(val.0[0].symbol.get_type().unwrap())
 					}
 				}
 			},

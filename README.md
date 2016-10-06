@@ -1,5 +1,6 @@
 # Emailang
 Emailang version 1.0.0
+
 A programming language based on emails.
 
 This is the perfect programming language for people who are tired of using fax
