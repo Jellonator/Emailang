@@ -3,6 +3,7 @@ use types::Type;
 use error;
 use parser;
 use parser::symbolparser;
+use error::{SyntaxError, SyntaxErrorType};
 
 #[derive(Clone, Debug)]
 pub struct Block(pub Vec<SymbolDef>);
@@ -112,40 +113,40 @@ impl OperatorType {
 	}
 }
 
-impl Symbol {
-	pub fn get_type(&self) -> Option<Type> {
-		match *self {
-			Symbol::Text(ref val) => Some(Type::Text(val.clone())),
-			Symbol::Identifier(ref val) => Some(Type::Text(val.clone())),
-			Symbol::UserPath(ref val) => Some(Type::UserPath(val.clone())),
+impl SymbolDef {
+	pub fn get_type(&self) -> Result<Type, SyntaxError> {
+		match self.symbol {
+			Symbol::Text(ref val) => Ok(Type::Text(val.clone())),
+			Symbol::Identifier(ref val) => Ok(Type::Text(val.clone())),
+			Symbol::UserPath(ref val) => Ok(Type::UserPath(val.clone())),
 			Symbol::Parenthesis(ref val) => {
 				if val.is_comma_delimited() {
 					let mut tuple = Vec::new();
 					for v in val.split_commas() {
 						if parser::symbolparser::is_expression(&v) {
-							tuple.push(Type::Expression(Box::new(symbolparser::parse_expression(&v).unwrap())));
+							tuple.push(Type::Expression(Box::new(try!(symbolparser::parse_expression(&v)))));
 						} else {
 							for symdef in v {
-								tuple.push(symdef.symbol.get_type().unwrap());
+								tuple.push(try!(symdef.get_type()));
 							}
 						}
 					}
-					Some(Type::Tuple(tuple))
+					Ok(Type::Tuple(tuple))
 				} else {
 					if symbolparser::is_expression(&val.0) {
-						Some(Type::Expression(Box::new(symbolparser::parse_expression(&val.0).unwrap())))
+						Ok(Type::Expression(Box::new(try!(symbolparser::parse_expression(&val.0)))))
 					} else {
 						assert!(val.0.len() == 1);
-						Some(val.0[0].symbol.get_type().unwrap())
+						Ok(try!(val.0[0].get_type()))
 					}
 				}
 			},
-			_ => None
+			_ => Err(self.errfactory.gen_error(SyntaxErrorType::NotAType))
 		}
 	}
 
 	pub fn get_operator(&self) -> OperatorType {
-		match *self {
+		match self.symbol {
 			// Separators
 			Symbol::Comma      => OperatorType::LeftToRight(2000),
 			// Operators

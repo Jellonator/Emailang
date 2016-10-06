@@ -2,7 +2,7 @@ use symbols;
 use symbols::{Symbol, SymbolDef};
 use std::str::Chars;
 use user::*;
-use error::{SyntaxErrorFactory, SyntaxError};
+use error::{SyntaxErrorFactory, SyntaxError, SyntaxErrorType};
 
 pub fn take_until(chars: &mut Chars, c: char) -> String {
 	let mut ret = String::new();
@@ -93,7 +93,7 @@ pub fn parse_text(code: &str, fname: &str) -> Result<Vec<SymbolDef>, SyntaxError
 			'|' => Symbol::Modifier,
 			'<' => {
 				let path = take_until(&mut chars, '>');
-				let pos = path.find('@').unwrap();
+				let pos = try!(path.find('@').ok_or(SyntaxError::new(line, column, SyntaxErrorType::MalformedUserpath)));
 				let (a, b) = path.split_at(pos);
 				Symbol::UserPath(UserPath(a.to_string(), b[1..].to_string()))
 			},
