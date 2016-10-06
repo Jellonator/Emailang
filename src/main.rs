@@ -14,9 +14,10 @@ use std::error::Error;
 use std::fs::File;
 use std::io::prelude::*;
 use std::path::Path;
+use std::env;
 
-fn main() {
-	let path = Path::new("main.email");
+fn run(fname: &str) {
+	let path = Path::new(&fname);
 	let display = path.display();
 
 	let mut file = match File::open(path) {
@@ -39,4 +40,30 @@ fn main() {
 	inter.execute(&instructions);
 
 	println!("");
+}
+
+fn help() {
+	println!(
+r"              __  __       _ _   _
+_/_/_/_/     |  \/  |     (_) | | |
+_/       __  | \  / | __ _ _| | | |     __ _ _ __   __ _
+_/_/_/  |__| | |\/| |/ _` | | | | |    / _` | '_ \ / _` |
+_/           | |  | | (_| | | | | |___| (_| | | | | (_| |
+_/_/_/_/     |_|  |_|\__,_|_|_| \_____/\__,_|_| |_|\__, |
+                                                    __/ |
+A language based on emails                         |___/
+=========================================================
+See DOC.md for documentation on how to use Emailang.
+Alternatively, see README.md for a quick tutorial.
+emailang <file> - run the given file");
+}
+
+fn main() {
+	let args = env::args().collect::<Vec<String>>();
+	match args.len() {
+		0 => panic!("This should not be possible!"),
+		1 => help(),
+		2 => run(&args[1]),
+		_ => println!("Invalid number of arguments!")
+	}
 }
