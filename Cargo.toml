@@ -1,6 +1,6 @@
 [package]
 name = "emailang"
-version = "0.1.0"
+version = "1.0.0"
 authors = ["James Beedie <jellonator00@gmail.com>"]
 
 [dependencies]

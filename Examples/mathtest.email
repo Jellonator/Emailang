@@ -1,0 +1,35 @@
+!test.com;
+
+!<user@test.com>{
+	"^init$" {
+		(sep, "Addition:") > @self;
+		(add, get,   1,   2) > <math@std.com>; # 3
+		(add, get,   1,  -4) > <math@std.com>; # -3
+		(add, get, foo,   2) > <math@std.com>; # NULL
+		(add, get,   1,   2,   4) > <math@std.com>; # 7
+
+		(sep, "Multiplication:") > @self;
+		(mul, get,  4, 8) > <math@std.com>; #  32
+		(mul, get, -4, 8) > <math@std.com>; # -32
+		(mul, get, 4, 8, 3) > <math@std.com>; # 96
+		(mul, get, 4, 8, foo) > <math@std.com>; # NULL
+
+		(sep, "Division:") > @self;
+		(div, get, 32,  8) > <math@std.com>; #  4
+		(div, get, 42, -7) > <math@std.com>; # -6
+		(div, get, 42, 3, 7) > <math@std.com>; # 2
+		(div, get, 64, 3) > <math@std.com>; # 21
+		(div, get, 64, foo, 11) > <math@std.com>; # NULL
+	}
+	"^sep$" {
+		(sep2, @content) > @self;
+	}
+	"^sep2$" {
+		(println, @content) > <io@std.com>;
+	}
+	"^get$" {
+		(println, "    GOT:", @content) > <io@std.com>;
+	}
+};
+
+init > <user@test.com>;

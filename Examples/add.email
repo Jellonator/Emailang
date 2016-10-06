@@ -1,0 +1,27 @@
+!foo.com;
+
+!<bar@foo.com> {
+	"^init$" {
+		val = "0";
+		(print, "Input a number: ") > <io@std.com>;
+		(input, get_input) > <io@std.com>;
+	}
+	"^get_input$" {
+		if @content|(filter, ".+") {
+			(add, add_input, @content, @val) > <math@std.com>;
+		} else {
+			(print, "Final value:", @val) > <io@std.com>;
+		};
+	}
+	"^add_input$" {
+		if @content|(filter, ".+") {
+			val = @content;
+		} else {
+			(println, "Bad value!") > <io@std.com>;
+		};
+		(print, "Input another number: ") > <io@std.com>;
+		(input, get_input) > <io@std.com>;
+	}
+};
+
+init > <bar@foo.com>;

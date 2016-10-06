@@ -51,7 +51,7 @@ _/_/_/  |__| | |\/| |/ _` | | | | |    / _` | '_ \ / _` |
 _/           | |  | | (_| | | | | |___| (_| | | | | (_| |
 _/_/_/_/     |_|  |_|\__,_|_|_| \_____/\__,_|_| |_|\__, |
                                                     __/ |
-A language based on emails                         |___/
+A programming language based on emails             |___/
 =========================================================
 See DOC.md for documentation on how to use Emailang.
 Alternatively, see README.md for a quick tutorial.

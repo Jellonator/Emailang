@@ -1,4 +1,5 @@
 # Emailang
+Emailang version 1.0.0
 A programming language based on emails.
 
 This is the perfect programming language for people who are tired of using fax
@@ -50,17 +51,19 @@ needs to be able to receive emails. to do this, we put a block after the
 definition of the user like so:
 ```
 !<username@servername.com>{
-	"foo" {
+	"^foo$" {
 
 	}
-	"bar" {
+	"^bar$" {
 
 	}
 };
 ```
 
-Now this user can receive emails with the subjects 'foo' and 'bar'. It doesn't
-do anything upon receiving these emails, but it does receive them at this point.
+Now this user can receive emails with the subjects 'foo' and 'bar'. Note that
+subjects are matched by Regular Expression, not just simple comparison. It
+doesn't do anything upon receiving these emails, but it does receive them at
+this point.
 
 ### Sending mail
 Now that we have a user, how do we send mail with it?
@@ -100,7 +103,7 @@ print something to the terminal, an email with the subject "print" must be sent
 to the user `<io@std.com>`, for example:
 ```
 # Tell the io standard library to print "Hello, World!" to the screen.
-("print", "Hello,", "World!") > <io@std.com>;
+("println", "Hello,", "World!") > <io@std.com>;
 ```
 
 Note that attachments will also be printed.
@@ -118,20 +121,19 @@ e.g. `@content` will retrieve the content of the message. The following environm
 
 * `@subject` - The subject of the email
 * `@content` - The content of the email
-* `@attach1` - The first attachment in the email (may be null)
-* `@attach2` - The second attachment in the email (may be null)
-* ...
-* `@attachn` - The nth attachment in the email (may be null)
+* `@attachments` - Tuple containing all attachments in the email
+* `@self` - Userpath referring to the user containing it.
+* `@sender` - Userpath referring to the user who sent the email.
 
 So now that we can retrieve information from an email, we can finally implement
 this into our user:
 ```
 !<username@servername.com>{
-	"foo" {
-		("print", "Received mail:", @content) > <io@std.com>;
+	"^foo$" {
+		("println", "Received mail:", @content) > <io@std.com>;
 	}
-	"bar" {
-		("print", "Received classified information!") > <io@std.com>;
+	"^bar$" {
+		("println", "Received classified information!") > <io@std.com>;
 	}
 };
 ```
@@ -145,11 +147,11 @@ Our final code will now look like this:
 ```
 !servername.com;
 !<username@servername.com>{
-	"foo" {
-		("print", "Received mail:", @content) > <io@std.com>;
+	"^foo$" {
+		("println", "Received mail:", @content) > <io@std.com>;
 	}
-	"bar" {
-		("print", "Received classified information!") > <io@std.com>;
+	"^bar$" {
+		("println", "Received classified information!") > <io@std.com>;
 	}
 };
 ("foo", "Have a great day!") > <username@servername.com>;
