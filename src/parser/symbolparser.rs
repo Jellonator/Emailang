@@ -53,22 +53,14 @@ pub fn split_expression(symbols: &[SymbolDef])
 
 fn parse_user_block(block: &[SymbolDef]) -> Result<Vec<(String, Vec<Instruction>)>, SyntaxError> {
 	let mut ret = Vec::new();
-	let mut symbols = block.iter();
-	loop {
-		// take one string, take one block
-		let res1 = symbols.next();
-		let res2 = symbols.next();
-		if let None = res1 {
-			if let None = res2 {
-				break;
-			}
-		}
-		let name = if let Symbol::Text(ref contents) = res1.unwrap().symbol {
+	for chunk in try!(split_semicolon(block)) {
+		assert!(chunk.len() == 2);
+		let name = if let Symbol::Text(ref contents) = chunk[0].symbol {
 			contents
 		} else {
-			panic!("{}");
+			panic!();
 		};
-		let block = if let Symbol::CurlyBraced(ref contents) = res2.unwrap().symbol {
+		let block = if let Symbol::CurlyBraced(ref contents) = chunk[1].symbol {
 			contents
 		} else {
 			panic!();
