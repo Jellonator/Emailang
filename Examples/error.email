@@ -1,3 +1,9 @@
-!foo.com
+!foo.com;
 
-!<bar@foo.com>;
+!<bar@foo.com>{
+	"foo" {
+		a = b;
+		c = d;
+		e = f;
+	}
+};

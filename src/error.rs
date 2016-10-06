@@ -2,22 +2,26 @@ use std::fmt;
 
 #[derive(Clone, Debug)]
 pub struct SyntaxErrorFactory {
-	pub line: usize,
-	pub column: usize,
+	pub pos: Option<(usize, usize)>,
 }
 
 impl SyntaxErrorFactory {
 	pub fn new(line: usize, column: usize) -> SyntaxErrorFactory {
 		SyntaxErrorFactory {
-			column: column,
-			line: line,
+			pos: Some((column, line)),
+		}
+	}
+
+	pub fn new_eof() -> SyntaxErrorFactory {
+		SyntaxErrorFactory {
+			pos: None,
 		}
 	}
 
 	pub fn gen_error(&self, errortype: SyntaxErrorType) -> SyntaxError {
 		SyntaxError {
 			errortype: errortype,
-			pos: Some((self.line, self.column))
+			pos: self.pos
 		}
 	}
 

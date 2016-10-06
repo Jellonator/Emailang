@@ -2,32 +2,24 @@ use symbols::{Symbol, SymbolDef};
 use instruction::Instruction;
 use instruction::CondBlock;
 use user::*;
-use std::slice::Iter;
 use types::Type;
 #[allow(unused_imports)]
 use error::{SyntaxErrorFactory, SyntaxErrorType, SyntaxError};
 
-pub fn take_symbols_until_semicolon(symbols: &mut Iter<SymbolDef>) -> Result<Vec<SymbolDef>,SyntaxError> {
+pub fn split_semicolon(symbols: &[SymbolDef]) -> Result<Vec<Vec<SymbolDef>>,SyntaxError> {
 	if symbols.len() == 0 {
 		// empty blocks are okay
 		return Ok(Vec::new());
 	}
-	let mut ret:Vec<SymbolDef> = Vec::new();
-	loop {
-		match symbols.next() {
-			None => {
-				return Err(SyntaxError::new_eof(SyntaxErrorType::ExpectedSemicolon));
-			},
-			Some(ref val) => {
-				if let Symbol::Semicolon = val.symbol {
-					break;
-				}
-				ret.push((*val).clone());
-			}
-		}
+	// Make sure ends with semicolon(unwrap here is fine)
+	if let Symbol::Semicolon = symbols.last().unwrap().symbol {}
+	else {
+		return Err(symbols.last().unwrap().errfactory.gen_error(SyntaxErrorType::ExpectedSemicolon));
 	}
-
-	Ok(ret)
+	// Split at each semicolon
+	Ok(symbols.split(
+		|v| if let Symbol::Semicolon = v.symbol {true} else {false}
+	).map(|v|v.to_vec()).collect())
 }
 
 pub fn is_expression(symbols: &[SymbolDef]) -> bool {
@@ -206,9 +198,7 @@ pub fn parse_expression(symbols: &[SymbolDef]) -> Result<Instruction, SyntaxErro
 
 pub fn parse_symbols(symbols: &[SymbolDef]) -> Result<Vec<Instruction>, SyntaxError> {
 	let mut ret = Vec::new();
-	let mut symbols = symbols.iter();
-	loop {
-		let chunk = try!(take_symbols_until_semicolon(&mut symbols));
+	for chunk in try!(split_semicolon(symbols)) {
 		if chunk.len() == 0 {
 			break;
 		}
