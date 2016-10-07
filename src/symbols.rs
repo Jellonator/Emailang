@@ -3,7 +3,7 @@ use types::Type;
 use error;
 use parser;
 use parser::symbolparser;
-use error::{SyntaxError, SyntaxErrorType};
+use error::{SyntaxError, SyntaxErrorType, SyntaxErrorFactory};
 
 #[derive(Clone, Debug)]
 pub struct Block(pub Vec<SymbolDef>);
@@ -124,7 +124,9 @@ impl SymbolDef {
 					let mut tuple = Vec::new();
 					for v in val.split_commas() {
 						if parser::symbolparser::is_expression(&v) {
-							tuple.push(Type::Expression(Box::new(try!(symbolparser::parse_expression(&v)))));
+							tuple.push(Type::Expression(
+								Box::new(try!(symbolparser::parse_expression(&v,
+								SyntaxErrorFactory::from_symbols(&v))))));
 						} else {
 							for symdef in v {
 								tuple.push(try!(symdef.get_type()));
@@ -134,10 +136,13 @@ impl SymbolDef {
 					Ok(Type::Tuple(tuple))
 				} else {
 					if symbolparser::is_expression(&val.0) {
-						Ok(Type::Expression(Box::new(try!(symbolparser::parse_expression(&val.0)))))
+						Ok(Type::Expression(Box::new(try!(symbolparser::parse_expression(&val.0,
+							SyntaxErrorFactory::from_symbols(&val.0))))))
 					} else {
 						assert!(val.0.len() == 1);
-						Ok(try!(val.0[0].get_type()))
+						Ok(try!(try!(val.0.get(0)
+							.ok_or(self.errfactory.gen_error(SyntaxErrorType::BadExpression)))
+							.get_type()))
 					}
 				}
 			},

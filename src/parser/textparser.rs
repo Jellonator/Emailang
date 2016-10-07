@@ -1,88 +1,128 @@
 use symbols;
 use symbols::{Symbol, SymbolDef};
-use std::str::Chars;
 use user::*;
+use std::slice::Iter;
 use error::{SyntaxErrorFactory, SyntaxError, SyntaxErrorType};
+use std::fmt;
 
-pub fn take_until(chars: &mut Chars, c: char) -> String {
-	let mut ret = String::new();
+#[derive(Clone, Copy)]
+pub struct CodeChar {
+	pub val: char,
+	pub line: usize,
+	pub column: usize
+}
+
+impl fmt::Display for CodeChar {
+	fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+		write!(f, "{}", self.val.to_string())
+	}
+}
+
+pub fn codechars_to_string(chars: &[CodeChar]) -> String {
+	chars.iter().map(|v|v.val).collect()
+}
+
+pub fn codechars_find(chars: &[CodeChar], c: char) -> Option<usize> {
+	chars.iter().position(|v|v.val == c)
+}
+
+pub fn codechars_trimmed(chars: &[CodeChar]) -> String {
+	codechars_to_string(chars).trim().to_string()
+}
+
+pub fn take_until(chars: &mut Iter<CodeChar>, c: char) -> Vec<CodeChar> {
+	let mut ret = Vec::new();
 	loop {
 		let n = chars.next();
 		match n {
 			None => break,
 			Some(val) => {
-				if val == c {
+				if val.val == c {
 					break
 				}
-				ret.push(val);
+				ret.push(*val);
 			}
 		}
 	}
 	ret
 }
 
-pub fn take_until_unescaped(chars: &mut Chars, m: char) -> String {
-	let mut ret = String::new();
+pub fn take_until_unescaped(chars: &mut Iter<CodeChar>, m: char) -> Vec<CodeChar> {
+	let mut ret = Vec::new();
 	let mut is_esc = false;
 	loop {
 		let n = chars.next();
 		match n {
 			None => break,
 			Some(other) => {
-				if other == '\\' && is_esc {
+				if other.val == '\\' && is_esc {
 					is_esc = true;
 				} else {
-					if other == m {
+					if other.val == m {
 						if !is_esc {
 							break
 						}
 					}
 					is_esc = false;
 				}
-				ret.push(other);
+				ret.push(*other);
 			}
 		}
 	}
 	ret
 }
 
-pub fn take_until_matched(chars: &mut Chars, begin: char, end: char, target_level: i32) -> String {
-	let mut ret = String::new();
+pub fn take_until_matched(chars: &mut Iter<CodeChar>, begin: char, end: char, target_level: i32) -> Vec<CodeChar> {
+	let mut ret = Vec::new();
 	let mut level: i32 = 1;
 	loop {
 		let n = chars.next();
 		match n {
 			None => break,
 			Some(val) => {
-				if val == begin {
+				if val.val == begin {
 					level += 1;
 				}
-				if val == end {
+				if val.val == end {
 					level -= 1;
 				}
 				if level == target_level {
 					break;
 				}
-				ret.push(val);
+				ret.push(*val);
 			}
 		}
 	}
 	ret
 }
 
-pub fn parse_text(code: &str, fname: &str) -> Result<Vec<SymbolDef>, SyntaxError> {
-	let mut ret = Vec::new();
-	let mut chars = code.chars();
-	let mut text = String::new();
+pub fn parse_text(code: &str) -> Result<Vec<SymbolDef>, SyntaxError> {
 	let mut line = 1;
 	let mut column = 0;
+	parse_code(&code.chars().map(|v| {
+		if v == '\n' {
+			line += 1;
+			column = 0;
+		}
+		column += 1;
+		CodeChar {
+			val: v,
+			line: line,
+			column: column
+		}
+	}).collect::<Vec<CodeChar>>())
+}
+
+pub fn parse_code(code: &[CodeChar]) -> Result<Vec<SymbolDef>, SyntaxError> {
+	let mut ret = Vec::new();
+	let mut chars = code.iter();
+	let mut text = String::new();
 	loop {
 		let c = match chars.next() {
 			Some(val) => val,
 			None => break
 		};
-		column += 1;
-		let s = match c {
+		let s = match c.val {
 			'!' => Symbol::Define,
 			',' => Symbol::Comma,
 			';' => Symbol::Semicolon,
@@ -93,38 +133,40 @@ pub fn parse_text(code: &str, fname: &str) -> Result<Vec<SymbolDef>, SyntaxError
 			'|' => Symbol::Modifier,
 			'<' => {
 				let path = take_until(&mut chars, '>');
-				let pos = try!(path.find('@').ok_or(SyntaxError::new(line, column, SyntaxErrorType::MalformedUserpath)));
+				let pos = try!(codechars_find(&path, '@').ok_or(SyntaxError::new(
+					c.line, c.column, SyntaxErrorType::MalformedUserpath)));
 				let (a, b) = path.split_at(pos);
-				Symbol::UserPath(UserPath(a.to_string(), b[1..].to_string()))
+				Symbol::UserPath(UserPath(codechars_to_string(a),
+					codechars_to_string(&b[1..])))
 			},
 			'{' => {
 				let block = take_until_matched(&mut chars, '{', '}', 0);
-				Symbol::CurlyBraced(symbols::Block(try!(parse_text(&block, fname))))
+				Symbol::CurlyBraced(symbols::Block(try!(parse_code(&block))))
 			},
 			'(' => {
 				let block = take_until_matched(&mut chars, '(', ')', 0);
-				Symbol::Parenthesis(symbols::Block(try!(parse_text(&block, fname))))
+				Symbol::Parenthesis(symbols::Block(try!(parse_code(&block))))
 			},
 			'"' => {
-				Symbol::Text(take_until_unescaped(&mut chars, '"'))
+				Symbol::Text(codechars_to_string(&take_until_unescaped(&mut chars, '"')))
 			},
 			'[' => {
 				let indexcontents = take_until(&mut chars, ']');
-				match indexcontents.find(':') {
+				match codechars_find(&indexcontents, ':') {
 					None => {
 						Symbol::Index(symbols::Block(
-							try!(parse_text(&indexcontents, fname))))
+							try!(parse_code(&indexcontents))))
 					},
 					Some(pos) => {
 						let val1 = &indexcontents[..pos];
-						let val1 = match val1.trim() {
+						let val1 = match codechars_trimmed(&val1).as_str() {
 							"" => None,
-							other => Some(symbols::Block(try!(parse_text(&other, fname))))
+							_ => Some(symbols::Block(try!(parse_code(val1))))
 						};
 						let val2 = &indexcontents[pos+1..];
-						let val2 = match val2.trim() {
+						let val2 = match codechars_trimmed(&val2).as_str() {
 							"" => None,
-							other => Some(symbols::Block(try!(parse_text(&other, fname))))
+							_ => Some(symbols::Block(try!(parse_code(val2))))
 						};
 						Symbol::Slice(val1, val2)
 					}
@@ -135,10 +177,7 @@ pub fn parse_text(code: &str, fname: &str) -> Result<Vec<SymbolDef>, SyntaxError
 				continue;
 			},
 			other => {
-				if other == '\n' {
-					line += 1;
-					column = 0;
-				} else if other.is_alphanumeric() || ['.', '@', '_', '-'].contains(&other) {
+				if other.is_alphanumeric() || ['.', '@', '_', '-'].contains(&other) {
 					text.push(other);
 				} else if !other.is_whitespace() {
 					panic!("{} is not a valid character!", other);
@@ -154,19 +193,19 @@ pub fn parse_text(code: &str, fname: &str) -> Result<Vec<SymbolDef>, SyntaxError
 					"elif" => Symbol::ElseIf,
 					other => Symbol::Identifier(other.to_string()),
 				},
-				errfactory: SyntaxErrorFactory::new(line, column)
+				errfactory: SyntaxErrorFactory::new(c.line, c.column)
 			});
 			text = String::new();
 		}
 		ret.push(SymbolDef{
 			symbol: s,
-			errfactory: SyntaxErrorFactory::new(line, column)
+			errfactory: SyntaxErrorFactory::new(c.line, c.column)
 		});
 	}
 	if text.len() > 0 {
 		ret.push(SymbolDef{
 			symbol: Symbol::Identifier(text),
-			errfactory: SyntaxErrorFactory::new(line, column)
+			errfactory: SyntaxErrorFactory::new_eof()
 		});
 	}
 	Ok(ret)

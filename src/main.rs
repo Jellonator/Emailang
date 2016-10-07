@@ -31,10 +31,23 @@ fn run(fname: &str) {
 		Ok(_) => {}
 	};
 
-	let instructions = match parser::parse(&contents, &fname) {
+	let instructions = match parser::parse(&contents) {
 		Ok(val) => val,
 		Err(err) => {
 			println!("{}", err);
+			if let Some(ref pos) = err.pos {
+				if let Some(ref s) = contents.lines().nth(pos.0 - 1) {
+					println!("{}", s);
+					let mut column = pos.1 - 1;
+					if column > 0 {
+						for _ in s.chars().take(column).filter(|c|*c=='\t') {
+							column += 7;
+						}
+						print!("{}", std::iter::repeat("-").take(column).collect::<String>());
+					}
+					println!("^");
+				}
+			}
 			return;
 		}
 	};

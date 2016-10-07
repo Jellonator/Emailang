@@ -2,10 +2,10 @@
 !<username@servername.com>{
 	"^foo$" {
 		("println", "Received mail:", @content) > <io@std.com>;
-	}
+	};
 	"^bar$" {
 		("println", "Received classified information!") > <io@std.com>;
-	}
+	};
 };
 ("foo", "Have a great day!") > <username@servername.com>;
 ("bar", "Important document", "Nuclear launch code: 12345") > <username@servername.com>;

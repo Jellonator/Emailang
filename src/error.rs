@@ -1,4 +1,5 @@
 use std::fmt;
+use symbols::{SymbolDef};
 
 #[derive(Clone, Debug)]
 pub struct SyntaxErrorFactory {
@@ -8,13 +9,21 @@ pub struct SyntaxErrorFactory {
 impl SyntaxErrorFactory {
 	pub fn new(line: usize, column: usize) -> SyntaxErrorFactory {
 		SyntaxErrorFactory {
-			pos: Some((column, line)),
+			pos: Some((line, column)),
 		}
 	}
 
 	pub fn new_eof() -> SyntaxErrorFactory {
 		SyntaxErrorFactory {
 			pos: None,
+		}
+	}
+
+	pub fn from_symbols(symbols: &[SymbolDef]) -> SyntaxErrorFactory {
+		if symbols.len() == 0 {
+			SyntaxErrorFactory::new_eof()
+		} else {
+			symbols[0].errfactory.clone()
 		}
 	}
 
@@ -41,6 +50,7 @@ pub enum SyntaxErrorType {
 	MalformedIfStatement,
 	NotAType,
 	BadExpression,
+	BadUserBlock,
 }
 
 pub struct SyntaxError {
@@ -66,7 +76,7 @@ impl SyntaxError {
 impl fmt::Display for SyntaxError {
 	fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
 		write!(f, "Syntax Error {}! {}.", match self.pos {
-			Some(pos) => format!("{}:{}", pos.0, pos.1),
+			Some(pos) => format!("on line {}:{}", pos.0, pos.1),
 			None => "at end of file".to_string()
 		}, self.errortype)
 	}
@@ -81,6 +91,7 @@ impl fmt::Display for SyntaxErrorType {
 			SyntaxErrorType::MalformedIfStatement => write!(f, "Malformed if statement"),
 			SyntaxErrorType::NotAType => write!(f, "Not a type"),
 			SyntaxErrorType::BadExpression => write!(f, "Bad expression"),
+			SyntaxErrorType::BadUserBlock => write!(f, "Bad user block"),
 		}
 	}
 }

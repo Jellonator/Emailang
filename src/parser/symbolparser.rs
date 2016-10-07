@@ -32,8 +32,8 @@ pub fn is_expression(symbols: &[SymbolDef]) -> bool {
 }
 
 // what a mess of a function definition
-pub fn split_expression(symbols: &[SymbolDef])
--> Option<(&[SymbolDef], &SymbolDef, &[SymbolDef])> {
+pub fn split_expression(symbols: &[SymbolDef], errfact: SyntaxErrorFactory)
+-> Result<(&[SymbolDef], &SymbolDef, &[SymbolDef]), SyntaxError> {
 	let mut pos = symbols.len();
 	let mut p = 0;
 	for i in 0..pos {
@@ -45,25 +45,31 @@ pub fn split_expression(symbols: &[SymbolDef])
 	}
 
 	if pos == symbols.len() {
-		None
+		Err(errfact.gen_error(SyntaxErrorType::BadExpression))
 	} else {
-		Some((&symbols[..pos], &symbols[pos], &symbols[pos+1..]))
+		Ok((&symbols[..pos], &symbols[pos], &symbols[pos+1..]))
 	}
 }
 
 fn parse_user_block(block: &[SymbolDef]) -> Result<Vec<(String, Vec<Instruction>)>, SyntaxError> {
 	let mut ret = Vec::new();
+	let errfact = SyntaxErrorFactory::from_symbols(block);
 	for chunk in try!(split_semicolon(block)) {
-		assert!(chunk.len() == 2);
+		if chunk.len() == 0 {
+			continue;
+		}
+		if chunk.len() != 2 {
+			return Err(errfact.gen_error(SyntaxErrorType::BadUserBlock))
+		}
 		let name = if let Symbol::Text(ref contents) = chunk[0].symbol {
 			contents
 		} else {
-			panic!();
+			return Err(errfact.gen_error(SyntaxErrorType::BadUserBlock))
 		};
 		let block = if let Symbol::CurlyBraced(ref contents) = chunk[1].symbol {
 			contents
 		} else {
-			panic!();
+			return Err(errfact.gen_error(SyntaxErrorType::BadUserBlock))
 		};
 		ret.push((name.clone(), try!(parse_symbols(&block.0))));
 	}
@@ -135,7 +141,8 @@ pub fn parse_ifblock(symbols: &[SymbolDef]) -> Result<Instruction, SyntaxError> 
 
 pub fn parse_type(symbols: &[SymbolDef]) -> Result<Type, SyntaxError> {
 	Ok(if is_expression(symbols) {
-		Type::Expression(Box::new(try!(parse_expression(symbols))))
+		Type::Expression(Box::new(
+			try!(parse_expression(symbols, SyntaxErrorFactory::from_symbols(symbols)))))
 	} else if symbols.len() == 1 {
 		try!(symbols[0].get_type())
 	} else {
@@ -143,48 +150,41 @@ pub fn parse_type(symbols: &[SymbolDef]) -> Result<Type, SyntaxError> {
 	})
 }
 
-pub fn parse_expression(symbols: &[SymbolDef]) -> Result<Instruction, SyntaxError> {
-	if is_expression(symbols) {
-		let (pre, mid, post) = match split_expression(symbols) {
-			Some(val) => val,
-			None => panic!("This shouldn't happen! Not actually an expression?")
-		};
-		let preval = try!(parse_type(pre));
-		let postval = try!(parse_type(post));
-		match mid.symbol {
-			Symbol::Arrow => Ok(Instruction::MailTo(preval, postval)),
-			Symbol::Addition => Ok(Instruction::Concatenate(preval, postval)),
-			Symbol::Receive => {
-				assert!(preval.is_null());
-				Ok(Instruction::GetEnv(postval))
-			},
-			Symbol::Slice(ref pos1, ref pos2) => {
-				assert!(postval.is_null());
-				Ok(Instruction::Slice(preval,
-					match *pos1 {
-						Some(ref val) => Some(try!(parse_type(&val.0))),
-						None => None
-					},
-					match *pos2 {
-						Some(ref val) => Some(try!(parse_type(&val.0))),
-						None => None
-					}
-				))
-			},
-			Symbol::Index(ref pos) => {
-				assert!(postval.is_null());
-				Ok(Instruction::Index(preval, try!(parse_type(&pos.0))))
-			},
-			Symbol::Assign => {
-				Ok(Instruction::Assign(preval, postval))
-			},
-			Symbol::Modifier => {
-				Ok(Instruction::Modify(preval, postval))
-			}
-			_ => Err(symbols[0].errfactory.gen_error(SyntaxErrorType::BadExpression))
+pub fn parse_expression(symbols: &[SymbolDef], errfact: SyntaxErrorFactory) -> Result<Instruction, SyntaxError> {
+	let (pre, mid, post) = try!(split_expression(symbols, errfact.clone()));
+	let preval = try!(parse_type(pre));
+	let postval = try!(parse_type(post));
+	match mid.symbol {
+		Symbol::Arrow => Ok(Instruction::MailTo(preval, postval)),
+		Symbol::Addition => Ok(Instruction::Concatenate(preval, postval)),
+		Symbol::Receive => {
+			assert!(preval.is_null());
+			Ok(Instruction::GetEnv(postval))
+		},
+		Symbol::Slice(ref pos1, ref pos2) => {
+			assert!(postval.is_null());
+			Ok(Instruction::Slice(preval,
+				match *pos1 {
+					Some(ref val) => Some(try!(parse_type(&val.0))),
+					None => None
+				},
+				match *pos2 {
+					Some(ref val) => Some(try!(parse_type(&val.0))),
+					None => None
+				}
+			))
+		},
+		Symbol::Index(ref pos) => {
+			assert!(postval.is_null());
+			Ok(Instruction::Index(preval, try!(parse_type(&pos.0))))
+		},
+		Symbol::Assign => {
+			Ok(Instruction::Assign(preval, postval))
+		},
+		Symbol::Modifier => {
+			Ok(Instruction::Modify(preval, postval))
 		}
-	} else {
-		Err(symbols[0].errfactory.gen_error(SyntaxErrorType::BadExpression))
+		_ => Err(symbols[0].errfactory.gen_error(SyntaxErrorType::BadExpression))
 	}
 }
 
@@ -192,7 +192,7 @@ pub fn parse_symbols(symbols: &[SymbolDef]) -> Result<Vec<Instruction>, SyntaxEr
 	let mut ret = Vec::new();
 	for chunk in try!(split_semicolon(symbols)) {
 		if chunk.len() == 0 {
-			break;
+			continue;
 		}
 
 		let inst = if let Symbol::Define = chunk[0].symbol {
@@ -221,7 +221,7 @@ pub fn parse_symbols(symbols: &[SymbolDef]) -> Result<Vec<Instruction>, SyntaxEr
 			try!(parse_ifblock(&chunk))
 		} else {
 			// expressions
-			try!(parse_expression(&chunk))
+			try!(parse_expression(&chunk, SyntaxErrorFactory::from_symbols(&chunk)))
 		};
 		ret.push(inst);
 	}
