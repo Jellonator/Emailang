@@ -51,6 +51,7 @@ pub enum SyntaxErrorType {
 	NotAType,
 	BadExpression,
 	BadUserBlock,
+	BadDefinition(Option<String>)
 }
 
 pub struct SyntaxError {
@@ -92,6 +93,12 @@ impl fmt::Display for SyntaxErrorType {
 			SyntaxErrorType::NotAType => write!(f, "Not a type"),
 			SyntaxErrorType::BadExpression => write!(f, "Bad expression"),
 			SyntaxErrorType::BadUserBlock => write!(f, "Bad user block"),
+			SyntaxErrorType::BadDefinition(ref s) => {
+				write!(f, "Bad definition{}, expected Userpath or servername", match *s {
+					Some(ref val) => format!(" of type {}", val),
+					None => "".to_string()
+				})
+			},
 		}
 	}
 }

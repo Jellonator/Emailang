@@ -76,6 +76,7 @@ fn parse_user_block(block: &[SymbolDef]) -> Result<Vec<(String, Vec<Instruction>
 	Ok(ret)
 }
 
+// TODO: rewrite this monstrosity!
 pub fn parse_ifblock(symbols: &[SymbolDef]) -> Result<Instruction, SyntaxError> {
 	let mut blocks = Vec::new();
 	let mut from_pos = 0;
@@ -158,11 +159,15 @@ pub fn parse_expression(symbols: &[SymbolDef], errfact: SyntaxErrorFactory) -> R
 		Symbol::Arrow => Ok(Instruction::MailTo(preval, postval)),
 		Symbol::Addition => Ok(Instruction::Concatenate(preval, postval)),
 		Symbol::Receive => {
-			assert!(preval.is_null());
+			if !preval.is_null() {
+				return Err(mid.errfactory.gen_error(SyntaxErrorType::BadExpression));
+			}
 			Ok(Instruction::GetEnv(postval))
 		},
 		Symbol::Slice(ref pos1, ref pos2) => {
-			assert!(postval.is_null());
+			if !postval.is_null() {
+				return Err(mid.errfactory.gen_error(SyntaxErrorType::BadExpression));
+			}
 			Ok(Instruction::Slice(preval,
 				match *pos1 {
 					Some(ref val) => Some(try!(parse_type(&val.0))),
@@ -175,7 +180,9 @@ pub fn parse_expression(symbols: &[SymbolDef], errfact: SyntaxErrorFactory) -> R
 			))
 		},
 		Symbol::Index(ref pos) => {
-			assert!(postval.is_null());
+			if !postval.is_null() {
+				return Err(mid.errfactory.gen_error(SyntaxErrorType::BadExpression));
+			}
 			Ok(Instruction::Index(preval, try!(parse_type(&pos.0))))
 		},
 		Symbol::Assign => {
@@ -196,17 +203,21 @@ pub fn parse_symbols(symbols: &[SymbolDef]) -> Result<Vec<Instruction>, SyntaxEr
 		}
 
 		let inst = if let Symbol::Define = chunk[0].symbol {
+			assert!(chunk.len() >= 2);
 			match chunk[1].symbol {
 				Symbol::UserPath(ref path) => {
-					assert!(chunk.len() <= 3);
-					let block = if chunk.len() == 2 {
-						Vec::new()
-					} else {
-						if let Symbol::CurlyBraced(ref block) = chunk[2].symbol {
-							try!(parse_user_block(&block.0))
-						} else {
-							panic!()
-						}
+					let block = match chunk.len() {
+						2 => Vec::new(),
+						3 => {
+							if let Symbol::CurlyBraced(ref block) = chunk[2].symbol {
+								try!(parse_user_block(&block.0))
+							} else {
+								return Err(chunk[2].errfactory.gen_error(
+									SyntaxErrorType::BadUserBlock))
+							}
+						},
+						_ => return Err(chunk[2].errfactory.gen_error(
+							SyntaxErrorType::BadUserBlock))
 					};
 					let user = User::create_user_internal(&path.0, block);
 					Instruction::CreateUser(path.1.clone(), user)
@@ -215,7 +226,9 @@ pub fn parse_symbols(symbols: &[SymbolDef]) -> Result<Vec<Instruction>, SyntaxEr
 					assert!(chunk.len() <= 2);
 					Instruction::CreateServer(name.clone())
 				},
-				_ => panic!("Unexpected Identifier")
+				_ => return Err(chunk[1].errfactory.gen_error(
+					SyntaxErrorType::BadDefinition(chunk[1].get_type().ok()
+					.map(|v|v.get_typename().to_string()))))
 			}
 		} else if let Symbol::If = chunk[0].symbol {
 			try!(parse_ifblock(&chunk))
