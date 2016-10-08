@@ -54,10 +54,10 @@ definition of the user like so:
 !<username@servername.com>{
 	"^foo$" {
 
-	}
+	};
 	"^bar$" {
 
-	}
+	};
 };
 ```
 
@@ -132,10 +132,10 @@ this into our user:
 !<username@servername.com>{
 	"^foo$" {
 		("println", "Received mail:", @content) > <io@std.com>;
-	}
+	};
 	"^bar$" {
 		("println", "Received classified information!") > <io@std.com>;
-	}
+	};
 };
 ```
 
@@ -150,10 +150,10 @@ Our final code will now look like this:
 !<username@servername.com>{
 	"^foo$" {
 		("println", "Received mail:", @content) > <io@std.com>;
-	}
+	};
 	"^bar$" {
 		("println", "Received classified information!") > <io@std.com>;
-	}
+	};
 };
 ("foo", "Have a great day!") > <username@servername.com>;
 ("bar", "Important document", "Nuclear launch code: 12345") > <username@servername.com>;
