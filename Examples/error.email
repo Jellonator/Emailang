@@ -3,11 +3,15 @@
 !<bar@foo.com>{
 	"foo" {
 		a = b;
-		c = d;
+		c = d
 		e = f;
+		(println, @a) > <io@std.com>;
+		(println, @b) > <io@std.com>;
+		(println, @c) > <io@std.com>;
+		(println, @d) > <io@std.com>;
+		(println, @e) > <io@std.com>;
+		(println, @f) > <io@std.com>;
 	};
 };
-
-!(1,2){
-
-};
+foo > <bar@foo.com>;
+x = (,);

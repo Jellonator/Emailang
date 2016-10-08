@@ -179,7 +179,21 @@ pub fn parse_code(code: &[CodeChar]) -> Result<Vec<SymbolDef>, SyntaxError> {
 			other => {
 				if other.is_alphanumeric() || ['.', '@', '_', '-'].contains(&other) {
 					text.push(other);
-				} else if !other.is_whitespace() {
+				} else if other.is_whitespace() {
+					//TODO: clean this up too
+					if text.len() > 0 {
+						ret.push(SymbolDef{
+							symbol: match text.as_str() {
+								"if" => Symbol::If,
+								"else" => Symbol::Else,
+								"elif" => Symbol::ElseIf,
+								other => Symbol::Identifier(other.to_string()),
+							},
+							errfactory: SyntaxErrorFactory::new(c.line, c.column)
+						});
+						text = String::new();
+					}
+				} else {
 					panic!("{} is not a valid character!", other);
 				}
 				continue;

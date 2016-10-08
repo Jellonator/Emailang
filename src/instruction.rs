@@ -131,7 +131,6 @@ impl Instruction {
 					Some(ref s) => {
 						let content = val.resolve(inter, env);
 						env.set(s, content);
-						return val.clone();
 					},
 					None => {
 						match (to.get_tuple(inter, env), val.get_tuple(inter, env)) {
@@ -146,6 +145,7 @@ impl Instruction {
 						}
 					}
 				}
+				return val.clone();
 			},
 			Instruction::IfBlock(ref b) => {
 				b.call(inter, env);

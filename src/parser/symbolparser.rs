@@ -155,19 +155,20 @@ pub fn parse_expression(symbols: &[SymbolDef], errfact: SyntaxErrorFactory) -> R
 	let (pre, mid, post) = try!(split_expression(symbols, errfact.clone()));
 	let preval = try!(parse_type(pre));
 	let postval = try!(parse_type(post));
+	if preval.is_null() == mid.get_operator().preval() {
+		return Err(mid.errfactory.gen_error(SyntaxErrorType::BadExpression));
+	}
+	if postval.is_null() == mid.get_operator().postval() {
+		return Err(mid.errfactory.gen_error(SyntaxErrorType::BadExpression));
+	}
 	match mid.symbol {
 		Symbol::Arrow => Ok(Instruction::MailTo(preval, postval)),
 		Symbol::Addition => Ok(Instruction::Concatenate(preval, postval)),
-		Symbol::Receive => {
-			if !preval.is_null() {
-				return Err(mid.errfactory.gen_error(SyntaxErrorType::BadExpression));
-			}
-			Ok(Instruction::GetEnv(postval))
-		},
+		Symbol::Assign => Ok(Instruction::Assign(preval, postval)),
+		Symbol::Modifier => Ok(Instruction::Modify(preval, postval)),
+		Symbol::Receive => Ok(Instruction::GetEnv(postval)),
+		Symbol::Index(ref pos) => Ok(Instruction::Index(preval, try!(parse_type(&pos.0)))),
 		Symbol::Slice(ref pos1, ref pos2) => {
-			if !postval.is_null() {
-				return Err(mid.errfactory.gen_error(SyntaxErrorType::BadExpression));
-			}
 			Ok(Instruction::Slice(preval,
 				match *pos1 {
 					Some(ref val) => Some(try!(parse_type(&val.0))),
@@ -179,18 +180,6 @@ pub fn parse_expression(symbols: &[SymbolDef], errfact: SyntaxErrorFactory) -> R
 				}
 			))
 		},
-		Symbol::Index(ref pos) => {
-			if !postval.is_null() {
-				return Err(mid.errfactory.gen_error(SyntaxErrorType::BadExpression));
-			}
-			Ok(Instruction::Index(preval, try!(parse_type(&pos.0))))
-		},
-		Symbol::Assign => {
-			Ok(Instruction::Assign(preval, postval))
-		},
-		Symbol::Modifier => {
-			Ok(Instruction::Modify(preval, postval))
-		}
 		_ => Err(symbols[0].errfactory.gen_error(SyntaxErrorType::BadExpression))
 	}
 }

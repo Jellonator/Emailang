@@ -82,25 +82,25 @@ pub struct SymbolDef {
 	pub symbol: Symbol
 }
 
-#[derive(Clone, Copy)]
+#[derive(Clone, Copy, Debug)]
 pub enum OperatorType {
-	LeftToRight(usize),
-	RightToLeft(usize),
+	LeftToRight(usize, bool, bool),
+	RightToLeft(usize, bool, bool),
 	Neither
 }
 
 impl OperatorType {
 	pub fn compare(&self, other:usize) -> bool {
 		match *self {
-			OperatorType::LeftToRight(val) => val > other,
-			OperatorType::RightToLeft(val) => val >= other,
+			OperatorType::LeftToRight(val,_,_) => val > other,
+			OperatorType::RightToLeft(val,_,_) => val >= other,
 			OperatorType::Neither => false
 		}
 	}
 	pub fn get(&self) -> usize {
 		match *self {
-			OperatorType::LeftToRight(val) => val,
-			OperatorType::RightToLeft(val) => val,
+			OperatorType::LeftToRight(val,_,_) => val,
+			OperatorType::RightToLeft(val,_,_) => val,
 			OperatorType::Neither => 0
 		}
 	}
@@ -109,6 +109,20 @@ impl OperatorType {
 			false
 		} else {
 			true
+		}
+	}
+	pub fn preval(&self) -> bool {
+		match *self {
+			OperatorType::LeftToRight(_,l,_) => l,
+			OperatorType::RightToLeft(_,l,_) => l,
+			OperatorType::Neither => false
+		}
+	}
+	pub fn postval(&self) -> bool {
+		match *self {
+			OperatorType::LeftToRight(_,_,r) => r,
+			OperatorType::RightToLeft(_,_,r) => r,
+			OperatorType::Neither => false
 		}
 	}
 }
@@ -153,16 +167,16 @@ impl SymbolDef {
 	pub fn get_operator(&self) -> OperatorType {
 		match self.symbol {
 			// Separators
-			Symbol::Comma      => OperatorType::LeftToRight(2000),
+			// Symbol::Comma      => OperatorType::LeftToRight(2000, None, None),
 			// Operators
-			Symbol::Assign     => OperatorType::RightToLeft(1002),
-			Symbol::Arrow      => OperatorType::LeftToRight(1001),
-			Symbol::Addition   => OperatorType::LeftToRight(1000),
+			Symbol::Assign     => OperatorType::LeftToRight(1002, true, true),
+			Symbol::Arrow      => OperatorType::LeftToRight(1001, true, true),
+			Symbol::Addition   => OperatorType::LeftToRight(1000, true, true),
 			// Modifier operators
-			Symbol::Modifier   => OperatorType::RightToLeft(3),
-			Symbol::Slice(_,_) => OperatorType::RightToLeft(2),
-			Symbol::Index(_)   => OperatorType::RightToLeft(2),
-			Symbol::Receive    => OperatorType::LeftToRight(1),
+			Symbol::Modifier   => OperatorType::RightToLeft(3, true, true),
+			Symbol::Slice(_,_) => OperatorType::RightToLeft(2, true, false),
+			Symbol::Index(_)   => OperatorType::RightToLeft(2, true, false),
+			Symbol::Receive    => OperatorType::LeftToRight(1, false, true),
 			_ => OperatorType::Neither
 		}
 	}
