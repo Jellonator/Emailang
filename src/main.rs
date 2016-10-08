@@ -38,11 +38,12 @@ fn run(fname: &str) {
 			if let Some(ref pos) = err.pos {
 				if let Some(ref s) = contents.lines().nth(pos.0 - 1) {
 					println!("{}", s);
-					let mut column = pos.1 - 1;
+					let mut column = pos.1;
+					for _ in s.chars().take(column).filter(|c|*c=='\t') {
+						print!("\t");
+						column -= 1;
+					}
 					if column > 0 {
-						for _ in s.chars().take(column).filter(|c|*c=='\t') {
-							column += 7;
-						}
 						print!("{}", std::iter::repeat("-").take(column).collect::<String>());
 					}
 					println!("^");

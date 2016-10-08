@@ -113,15 +113,32 @@ pub fn parse_text(code: &str) -> Result<Vec<SymbolDef>, SyntaxError> {
 	}).collect::<Vec<CodeChar>>())
 }
 
+pub fn take_identifier(chars: &mut Vec<SymbolDef>, text: &mut String, c: &CodeChar) {
+	if text.len() > 0 {
+		chars.push(SymbolDef {
+			symbol: match text.as_str() {
+				"if" => Symbol::If,
+				"else" => Symbol::Else,
+				"elif" => Symbol::ElseIf,
+				other => Symbol::Identifier(other.to_string()),
+			},
+			errfactory: SyntaxErrorFactory::new(c.line, c.column)
+		});
+		text.clear();
+	}
+}
+
 pub fn parse_code(code: &[CodeChar]) -> Result<Vec<SymbolDef>, SyntaxError> {
 	let mut ret = Vec::new();
 	let mut chars = code.iter();
 	let mut text = String::new();
+	let mut lastchar = None;
 	loop {
 		let c = match chars.next() {
 			Some(val) => val,
 			None => break
 		};
+		lastchar = Some(c.clone());
 		let s = match c.val {
 			'!' => Symbol::Define,
 			',' => Symbol::Comma,
@@ -180,47 +197,21 @@ pub fn parse_code(code: &[CodeChar]) -> Result<Vec<SymbolDef>, SyntaxError> {
 				if other.is_alphanumeric() || ['.', '@', '_', '-'].contains(&other) {
 					text.push(other);
 				} else if other.is_whitespace() {
-					//TODO: clean this up too
-					if text.len() > 0 {
-						ret.push(SymbolDef{
-							symbol: match text.as_str() {
-								"if" => Symbol::If,
-								"else" => Symbol::Else,
-								"elif" => Symbol::ElseIf,
-								other => Symbol::Identifier(other.to_string()),
-							},
-							errfactory: SyntaxErrorFactory::new(c.line, c.column)
-						});
-						text = String::new();
-					}
+					take_identifier(&mut ret, &mut text, &c);
 				} else {
 					panic!("{} is not a valid character!", other);
 				}
 				continue;
 			}
 		};
-		if text.len() > 0 {
-			ret.push(SymbolDef{
-				symbol: match text.as_str() {
-					"if" => Symbol::If,
-					"else" => Symbol::Else,
-					"elif" => Symbol::ElseIf,
-					other => Symbol::Identifier(other.to_string()),
-				},
-				errfactory: SyntaxErrorFactory::new(c.line, c.column)
-			});
-			text = String::new();
-		}
+		take_identifier(&mut ret, &mut text, &c);
 		ret.push(SymbolDef{
 			symbol: s,
 			errfactory: SyntaxErrorFactory::new(c.line, c.column)
 		});
 	}
-	if text.len() > 0 {
-		ret.push(SymbolDef{
-			symbol: Symbol::Identifier(text),
-			errfactory: SyntaxErrorFactory::new_eof()
-		});
+	if let Some(ref lastc) = lastchar {
+		take_identifier(&mut ret, &mut text, &lastc);
 	}
 	Ok(ret)
 }
