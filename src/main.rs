@@ -61,14 +61,14 @@ fn run(fname: &str) {
 
 fn help() {
 	println!(
-r"      _ _ _ _  __________       _ _ _
-    /_/_/_/_/ | @≈≈   /  |     (_) | |
-   /_/_ _  _  |  /\  /\  | __ _ _| | |     __ _ _ __   __ _
-  /_/_/_/ |_| | //\\//\\ |/ _` | | | |    / _` | '_ \ / _` |
- /_/_ _ _     |//  \/  \\| (_| | | | |___| (_|_| | | | (_| |
-/_/_/_/_/     |/________\|\__,_|_|_\_____/\/   |_|_|_|\__, |
-A programming language based on emails     \    ___________|
-                                            \__|      v1.0.0
+r"      _ _ _ _  __________       _ _
+    /_/_/_/_/ | @≈≈   /  |     (_| |
+   /_/_ _  _  |  /\  /\  | __ _ _| |     __ _ _ __   __ _
+  /_/_/_/ |_| | //\\//\\ |/ _` | | |    / _` | '_ \ / _` |
+ /_/_ _ _     |//  \/  \\| (_| | | |___| (_|_| | | | (_| |
+/_/_/_/_/     |/________\|\__,_|_\_____/\/   |_|_|_|\__, |
+A programming language based on emails   \    ___________|
+                                          \__|      v1.0.0
 See DOC.md for documentation on how to use Emailang.
 Alternatively, see README.md for a quick tutorial.
 emailang <file> - run the given file");
