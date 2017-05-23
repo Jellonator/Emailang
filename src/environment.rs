@@ -1,19 +1,18 @@
 use types::Type;
 use std::collections::HashMap;
+use user::UserPath;
 
 #[derive(Clone)]
 pub struct Environment {
 	pub data: HashMap<String, Type>,
-	pub username: String,
-	pub server: String,
+	pub path: UserPath
 }
 
 impl Environment {
 	pub fn new(username: &str, server: &str) -> Environment {
 		Environment {
 			data: HashMap::new(),
-			username: username.to_string(),
-			server: server.to_string()
+			path: UserPath(username.to_string(), server.to_string())
 		}
 	}
 

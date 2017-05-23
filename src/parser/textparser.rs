@@ -145,7 +145,7 @@ pub fn parse_code(code: &[CodeChar]) -> Result<Vec<SymbolDef>, SyntaxError> {
 			';' => Symbol::Semicolon,
 			'>' => Symbol::Arrow,
 			'+' => Symbol::Addition,
-			'@' => Symbol::Receive,
+			'*' => Symbol::Receive,
 			'=' => Symbol::Assign,
 			'|' => Symbol::Modifier,
 			'<' => {

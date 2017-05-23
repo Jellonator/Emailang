@@ -5,29 +5,38 @@ use std::rc::Rc;
 use std::fmt;
 use types::Type;
 use environment::Environment;
-use server::Server;
 use regex;
 
+/// A Tuple that represents a username + servername combo.
 #[derive(Clone, Debug)]
 pub struct UserPath(pub String, pub String);
 
+impl UserPath {
+    /// Returns a reference to this UserPath's username.
+    fn get_username(&self) -> &str {
+        &self.0
+    }
+    /// Returns a reference to this UserPath's server.
+    fn get_servername(&self) -> &str {
+        &self.1
+    }
+}
+
 #[derive(Clone)]
 pub struct User {
-	pub name: String,
-	func: UserType,
-	env: Environment
+	pub func: UserType,
+	pub env: Environment
 }
 
 impl fmt::Debug for User {
 	fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-		write!(f, "User {{name: {}}}", self.name)
+		write!(f, "User {{name: {}}}", self.env.path.get_username())
 	}
 }
 
 impl User {
 	pub fn create_user_external(name: &str, func: Box<UserExtFunc>) -> User {
 		User {
-			name: name.to_string(),
 			func: UserType::External(Rc::new(func)),
 			env: Environment::new(name, "")
 		}
@@ -36,7 +45,6 @@ impl User {
 	pub fn create_user_internal(name: &str, instructions: Vec<(String, Vec<Instruction>)>)
 	-> User {
 		User {
-			name: name.to_string(),
 			func: UserType::Internal(instructions.iter().map(
 				|v|(regex::Regex::new(&v.0).unwrap(), v.1.clone())).collect()),
 			env: Environment::new(name, "")
@@ -45,7 +53,7 @@ impl User {
 
 	pub fn create_mail(&self, to: UserPath, subject: &str, message: &str) -> Mail {
 		Mail {
-			from: UserPath(self.name.to_string(), self.env.server.clone()),
+			from: self.env.path.clone(),
 			to: to,
 			subject: subject.to_string(),
 			message: message.to_string(),
@@ -53,12 +61,12 @@ impl User {
 		}
 	}
 
-	pub fn send(&mut self, mut inter: &mut Interpreter, mail: &Mail, server: &Server) {
-		self.env.server = server.name.clone();
+	pub fn send(&mut self, mut inter: &mut Interpreter, mail: &Mail) {
+		self.env.path = mail.to.clone();
 		self.env.set("subject", Type::Text(mail.subject.clone()));
 		self.env.set("content", Type::Text(mail.message.clone()));
 		self.env.set("sender", Type::UserPath(mail.from.clone()));
-		self.env.set("self", Type::UserPath(UserPath(self.name.clone(), server.name.clone())));
+		self.env.set("self", Type::UserPath(mail.to.clone()));
 		self.env.set("attachments", Type::Tuple(mail.attachments
 			.iter()
 			.map(|v|Type::Text(v.clone()))

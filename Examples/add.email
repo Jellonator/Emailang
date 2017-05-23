@@ -7,15 +7,15 @@
 		(input, get_input) > <io@std.com>;
 	};
 	"^get_input$" {
-		if @content|(filter, ".+") {
-			(add, add_input, @content, @val) > <math@std.com>;
+		if *content|(filter, ".+") {
+			(add, add_input, *content, *val) > <math@std.com>;
 		} else {
-			(print, "Final value:", @val) > <io@std.com>;
+			(print, "Final value:", *val) > <io@std.com>;
 		};
 	};
 	"^add_input$" {
-		if @content|(filter, ".+") {
-			val = @content;
+		if *content|(filter, ".+") {
+			val = *content;
 		} else {
 			(println, "Bad value!") > <io@std.com>;
 		};

@@ -5,9 +5,10 @@ use mail::Mail;
 use user::*;
 use environment::Environment;
 mod std;
+use std::collections::HashMap;
 
 pub struct Interpreter {
-	servers: Vec<Server>,
+	servers: HashMap<String, Server>,
 	pending: Vec<Mail>,
 	users_to_add: Vec<(String, User)>,
 	servers_to_add: Vec<String>,
@@ -16,7 +17,7 @@ pub struct Interpreter {
 impl Interpreter {
 	pub fn new() -> Interpreter {
 		let mut inter = Interpreter {
-			servers: Vec::new(),
+			servers: HashMap::new(),
 			pending: Vec::new(),
 			users_to_add: Vec::new(),
 			servers_to_add: Vec::new(),
@@ -40,12 +41,7 @@ impl Interpreter {
 	}
 
 	fn get_server(&mut self, name: &str) -> Option<&mut Server> {
-		for serv in self.servers.iter_mut() {
-			if &serv.name == name {
-				return Some(serv);
-			}
-		}
-		None
+		self.servers.get_mut(name)
 	}
 
 	fn handle_sent_mail(&mut self, mail: &Mail) {
@@ -60,15 +56,13 @@ impl Interpreter {
 			None => return
 		};
 
-		let servhack = serv as *const Server;
-		let servhack = unsafe {&*servhack};
 		let mut user = match serv.get_user_mut(&tuser) {
 			Some(val) => val,
 			None => return
 		};
 
 		// Just a note that theoretically this should be safe
-		user.send(selfhack/*huehuehue*/, &mail, &servhack);
+		user.send(selfhack/*huehuehue*/, &mail);
 	}
 
 	pub fn handle_pending(&mut self) -> bool {
@@ -79,15 +73,15 @@ impl Interpreter {
 		}
 
 		for server_name in self.servers_to_add.drain(..) {
-			self.servers.push(Server{
-				name: server_name,
-				users: Vec::new()
+			self.servers.insert(server_name, Server{
+				users: HashMap::new()
 			});
 		}
 		let users = self.users_to_add.split_off(0);
 		for def in users {
 			let mut serv = self.get_server(&def.0).unwrap();
-			serv.users.push(def.1);
+			let name = def.1.env.path.0.to_string();
+			serv.add_user(name, def.1);
 		}
 		let mail = self.pending.split_off(0);
 		for m in mail {

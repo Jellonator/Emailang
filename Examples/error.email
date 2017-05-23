@@ -5,12 +5,12 @@
 		a = b;
 		c = d
 		e = f;
-		(println, @a) > <io@std.com>;
-		(println, @b) > <io@std.com>;
-		(println, @c) > <io@std.com>;
-		(println, @d) > <io@std.com>;
-		(println, @e) > <io@std.com>;
-		(println, @f) > <io@std.com>;
+		(println, *a) > <io@std.com>;
+		(println, *b) > <io@std.com>;
+		(println, *c) > <io@std.com>;
+		(println, *d) > <io@std.com>;
+		(println, *e) > <io@std.com>;
+		(println, *f) > <io@std.com>;
 	};
 };
 foo > <bar@foo.com>;

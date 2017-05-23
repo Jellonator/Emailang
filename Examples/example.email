@@ -1,7 +1,7 @@
 !servername.com;
 !<username@servername.com>{
 	"^foo$" {
-		("println", "Received mail:", @content) > <io@std.com>;
+		("println", "Received mail:", *content) > <io@std.com>;
 	};
 	"^bar$" {
 		("println", "Received classified information!") > <io@std.com>;

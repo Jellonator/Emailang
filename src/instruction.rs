@@ -68,7 +68,7 @@ impl Instruction {
 					message: d.message,
 					attachments: d.attachments.clone(),
 					to: target,
-					from: UserPath(env.username.clone(), env.server.clone())
+					from: env.path.clone()
 				});
 				return draft.clone();
 			},
