@@ -1,4 +1,4 @@
-use user::User;
+use user::*;
 use interpreter::Interpreter;
 use mail::Mail;
 use std::char;
@@ -20,9 +20,9 @@ fn func(user: &User, inter: &mut Interpreter, mail: &Mail) {
 				})
 				.fold(0, |acc, x| acc + x);
 			if is_okay {
-				inter.mail(user.create_mail(mail.from.clone(), &mail.message, &sum.to_string()));
+				inter.mail(Mail::create(mail.to.clone(), mail.from.clone(), &mail.message, &sum.to_string()));
 			} else {
-				inter.mail(user.create_mail(mail.from.clone(), &mail.message, ""));
+				inter.mail(Mail::create(mail.to.clone(), mail.from.clone(), &mail.message, ""));
 			}
 		},
 		"mul" => {
@@ -40,9 +40,9 @@ fn func(user: &User, inter: &mut Interpreter, mail: &Mail) {
 				})
 				.fold(1, |acc, x| acc * x);
 			if is_okay {
-				inter.mail(user.create_mail(mail.from.clone(), &mail.message, &sum.to_string()));
+				inter.mail(Mail::create(mail.to.clone(), mail.from.clone(), &mail.message, &sum.to_string()));
 			} else {
-				inter.mail(user.create_mail(mail.from.clone(), &mail.message, ""));
+				inter.mail(Mail::create(mail.to.clone(), mail.from.clone(), &mail.message, ""));
 			}
 		},
 		"div" => {
@@ -71,9 +71,9 @@ fn func(user: &User, inter: &mut Interpreter, mail: &Mail) {
 				})
 				.fold(base, |acc, x| acc / x);
 			if is_okay {
-				inter.mail(user.create_mail(mail.from.clone(), &mail.message, &sum.to_string()));
+				inter.mail(Mail::create(mail.to.clone(), mail.from.clone(), &mail.message, &sum.to_string()));
 			} else {
-				inter.mail(user.create_mail(mail.from.clone(), &mail.message, ""));
+				inter.mail(Mail::create(mail.to.clone(), mail.from.clone(), &mail.message, ""));
 			}
 		},
 		"ord" => {
@@ -84,7 +84,8 @@ fn func(user: &User, inter: &mut Interpreter, mail: &Mail) {
 				.chars()
 				.map(|v|v.to_string())
 				.collect::<Vec<String>>();
-			let mut retmail = user.create_mail(
+			let mut retmail = Mail::create(
+				mail.to.clone(),
 				mail.from.clone(),
 				&mail.message,
 				&ords.get(0).map(|v|v.as_str()).unwrap_or("0"));
@@ -100,12 +101,12 @@ fn func(user: &User, inter: &mut Interpreter, mail: &Mail) {
 				.map(|v|v.parse::<u32>().unwrap_or(0))
 				.map(|v|char::from_u32(v).unwrap_or('\0'))
 				.collect::<String>();
-			inter.mail(user.create_mail(mail.from.clone(), &mail.message, &chars));
+			inter.mail(Mail::create(mail.to.clone(), mail.from.clone(), &mail.message, &chars));
 		},
 		o => println!("Bad math function {}!", o)
 	}
 }
 
-pub fn create() -> User {
-	User::create_user_external("math", Box::new(func))
+pub fn create() -> UserDef {
+	UserDef::create_def_external(Box::new(func))
 }

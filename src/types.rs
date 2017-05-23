@@ -16,56 +16,60 @@ pub enum Type {
 }
 
 impl Type {
-	pub fn get_num<T>(&self, inter: &mut Interpreter, env: &mut Environment) -> Option<T>
+	pub fn get_num<T>(&self, inter: &mut Interpreter, from: &UserPath,
+	                  env: &mut Environment) -> Option<T>
 	where T: FromStr {
 		match *self {
 			Type::Text(ref s) => s.parse::<T>().ok(),
-			Type::Expression(_) => self.resolve(inter, env).get_num(inter, env),
+			Type::Expression(_) => self.resolve(inter, from, env).get_num(inter, from, env),
 			_ => None
 		}
 	}
 
-	fn get_modname(&self, inter: &mut Interpreter, env: &mut Environment) -> String {
+	fn get_modname(&self, inter: &mut Interpreter, from: &UserPath,
+	               env: &mut Environment) -> String {
 		match *self {
 			Type::Text(ref s) => s.clone(),
-			Type::Tuple(ref t) => t[0].get_string(inter, env).unwrap(),
-			Type::Expression(_) => self.resolve(inter, env).get_modname(inter, env),
+			Type::Tuple(ref t) => t[0].get_string(inter, from, env).unwrap(),
+			Type::Expression(_) => self.resolve(inter, from, env).get_modname(inter, from, env),
 			_ => panic!()
 		}
 	}
 
-	fn get_modargs(&self, inter: &mut Interpreter, env: &mut Environment) -> Vec<Type> {
+	fn get_modargs(&self, inter: &mut Interpreter, from: &UserPath,
+	               env: &mut Environment) -> Vec<Type> {
 		match *self {
 			Type::Text(_) => Vec::new(),
 			Type::Tuple(ref t) => t[1..].to_vec(),
-			Type::Expression(_) => self.resolve(inter, env).get_modargs(inter, env),
+			Type::Expression(_) => self.resolve(inter, from, env).get_modargs(inter, from, env),
 			_ => panic!()
 		}
 	}
 
-	pub fn modify(&self, other: &Type, inter: &mut Interpreter, env: &mut Environment) -> Option<Type> {
-		let mod_name = self.get_modname(inter, env);
-		let mod_args = self.get_modargs(inter, env);
+	pub fn modify(&self, other: &Type, inter: &mut Interpreter, from: &UserPath,
+	              env: &mut Environment) -> Option<Type> {
+		let mod_name = self.get_modname(inter, from, env);
+		let mod_args = self.get_modargs(inter, from, env);
 		match mod_name.as_str() {
 			"chars" => { // Turn a string into a tuple of characters
 				assert!(mod_args.len() == 0);
-				Some(Type::Tuple(other.get_string(inter, env).unwrap().chars()
+				Some(Type::Tuple(other.get_string(inter, from, env).unwrap().chars()
 					.map(|v|Type::Text(v.to_string())).collect()))
 			},
 			"merge" => {
 				assert!(mod_args.len() == 0);
 				Some(Type::Text(
-					other.unpack(inter, env).iter()
-					.map(|v|v.get_string(inter, env).unwrap())
+					other.unpack(inter, from, env).iter()
+					.map(|v|v.get_string(inter, from, env).unwrap())
 					.collect::<String>()
 				))
 			},
 			"filter" => {
 				assert!(mod_args.len() == 1);
-				let r = regex::Regex::new(&mod_args[0].get_string(inter, env).unwrap()).unwrap();
+				let r = regex::Regex::new(&mod_args[0].get_string(inter, from, env).unwrap()).unwrap();
 				Some(Type::Tuple(
-					other.unpack(inter, env).iter()
-					.map(|v|v.get_string(inter, env).unwrap())
+					other.unpack(inter, from, env).iter()
+					.map(|v|v.get_string(inter, from, env).unwrap())
 					.filter(|v|r.is_match(&v))
 					.map(|v|Type::Text(v))
 					.collect()
@@ -75,41 +79,44 @@ impl Type {
 		}
 	}
 
-	pub fn get_bool(&self, inter: &mut Interpreter, env: &mut Environment) -> bool {
+	pub fn get_bool(&self, inter: &mut Interpreter, from: &UserPath,
+	                env: &mut Environment) -> bool {
 		match *self {
 			Type::Null => false,
 			Type::Text(ref s) => {
 				!["false", "0", ""].contains(&s.to_lowercase().as_str())
 			},
 			Type::Tuple(ref t) => t.len() > 0,
-			Type::Expression(_) => self.resolve(inter, env).get_bool(inter, env),
+			Type::Expression(_) => self.resolve(inter, from, env).get_bool(inter, from, env),
 			_ => true
 		}
 	}
 
-	pub fn resolve(&self, inter: &mut Interpreter, env: &mut Environment) -> Type {
+	pub fn resolve(&self, inter: &mut Interpreter, from: &UserPath, env: &mut Environment) -> Type {
 		match *self {
 			Type::Expression(ref exp) => {
-				exp.call(inter, env).resolve(inter, env)
+				exp.call(inter, from, env).resolve(inter, from, env)
 			},
 			Type::Tuple(ref tuple) => {
-				Type::Tuple(tuple.iter().map(|v|v.resolve(inter, env)).collect())
+				Type::Tuple(tuple.iter().map(|v|v.resolve(inter, from, env)).collect())
 			},
 			ref other => other.clone()
 		}
 	}
 
-	pub fn len(&self, inter: &mut Interpreter, env: &mut Environment) -> Option<usize> {
+	pub fn len(&self, inter: &mut Interpreter, from: &UserPath,
+	           env: &mut Environment) -> Option<usize> {
 		match *self {
 			Type::Tuple(ref vec) => Some(vec.len()),
 			Type::Text(ref text) => Some(text.chars().count()),
-			Type::Expression(_) => self.resolve(inter, env).len(inter, env),
+			Type::Expression(_) => self.resolve(inter, from, env).len(inter, from, env),
 			_ => None
 		}
 	}
 
-	pub fn index(&self, pos: isize, inter: &mut Interpreter, env: &mut Environment) -> Option<Type> {
-		let selflen = self.len(inter, env).unwrap();
+	pub fn index(&self, pos: isize, inter: &mut Interpreter, from: &UserPath,
+	             env: &mut Environment) -> Option<Type> {
+		let selflen = self.len(inter, from, env).unwrap();
 		let pos = if pos < 0 {
 			((selflen as isize) + pos) as usize
 		} else {
@@ -118,13 +125,15 @@ impl Type {
 		match *self {
 			Type::Tuple(ref vec) => Some(vec[pos].clone()),
 			Type::Text(ref text) => Some(Type::Text(text.chars().nth(pos).unwrap().to_string())),
-			Type::Expression(_) => self.resolve(inter, env).index(pos as isize, inter, env),
+			Type::Expression(_) => self.resolve(inter, from, env)
+			                           .index(pos as isize, inter, from, env),
 			_ => None
 		}
 	}
 
-	pub fn slice(&self, a: isize, b: isize, inter: &mut Interpreter, env: &mut Environment) -> Option<Type> {
-		let selflen = self.len(inter, env).unwrap();
+	pub fn slice(&self, a: isize, b: isize, inter: &mut Interpreter, from: &UserPath,
+	             env: &mut Environment) -> Option<Type> {
+		let selflen = self.len(inter, from, env).unwrap();
 		let a = if a < 0 {
 			((selflen as isize) + a) as usize
 		} else {
@@ -141,8 +150,8 @@ impl Type {
 				let chars = text.chars();
 				Some(Type::Text(chars.skip(a).take(b-a).collect()))
 			},
-			Type::Expression(_) => self.resolve(inter, env)
-				.slice(a as isize, b as isize, inter, env),
+			Type::Expression(_) => self.resolve(inter, from, env)
+				.slice(a as isize, b as isize, inter, from, env),
 			_ => None
 		}
 	}
@@ -165,41 +174,46 @@ impl Type {
 		}
 	}
 
-	pub fn get_string(&self, inter: &mut Interpreter, env: &mut Environment) -> Option<String> {
+	pub fn get_string(&self, inter: &mut Interpreter, from: &UserPath,
+	                  env: &mut Environment) -> Option<String> {
 		match *self {
 			Type::Text(ref val) => Some(val.clone()),
-			Type::Expression(_) => self.resolve(inter, env).get_string(inter, env),
+			Type::Expression(_) => self.resolve(inter, from, env).get_string(inter, from, env),
+			Type::UserPath(ref path) => Some(format!("{}@{}", &path.0, &path.1)),
 			_ => None
 		}
 	}
 
-	pub fn get_tuple(&self, inter: &mut Interpreter, env: &mut Environment) -> Option<Vec<Type>> {
+	pub fn get_tuple(&self, inter: &mut Interpreter, from: &UserPath,
+	                 env: &mut Environment) -> Option<Vec<Type>> {
 		match *self {
 			Type::Tuple(ref v) => Some(v.clone()),
-			Type::Expression(_) => self.resolve(inter, env).get_tuple(inter, env),
+			Type::Expression(_) => self.resolve(inter, from, env).get_tuple(inter, from, env),
 			_ => None
 		}
 	}
 
-	pub fn unpack(&self, inter: &mut Interpreter, env: &mut Environment) -> Vec<Type> {
-		match self.get_tuple(inter, env) {
+	pub fn unpack(&self, inter: &mut Interpreter, from: &UserPath,
+	              env: &mut Environment) -> Vec<Type> {
+		match self.get_tuple(inter, from, env) {
 			Some(v) => v,
 			None => vec![self.clone()]
 		}
 	}
 
-	pub fn get_draft(&self, inter: &mut Interpreter, env: &mut Environment) -> Option<Draft> {
+	pub fn get_draft(&self, inter: &mut Interpreter, from: &UserPath,
+	                 env: &mut Environment) -> Option<Draft> {
 		match *self {
 			Type::Tuple(ref t) => {
 				Some(Draft {
 					subject: t.get(0).map(
-						|v|v.get_string(inter, env).unwrap_or("".to_string())
+						|v|v.get_string(inter, from, env).unwrap_or("".to_string())
 					).unwrap_or("".to_string()),
 					message: t.get(1).map(
-						|v|v.get_string(inter, env).unwrap_or("".to_string())
+						|v|v.get_string(inter, from, env).unwrap_or("".to_string())
 					).unwrap_or("".to_string()),
 					attachments: (2..).take_while(|v|*v<t.len()).map(
-						|v|t[v].get_string(inter, env).unwrap_or("".to_string())
+						|v|t[v].get_string(inter, from, env).unwrap_or("".to_string())
 					).collect()
 				})
 			},
@@ -210,15 +224,16 @@ impl Type {
 					attachments: Vec::new()
 				})
 			},
-			Type::Expression(_) => self.resolve(inter, env).get_draft(inter, env),
+			Type::Expression(_) => self.resolve(inter, from, env).get_draft(inter, from, env),
 			_ => None
 		}
 	}
 
-	pub fn get_user(&self, inter: &mut Interpreter, env: &mut Environment) -> Option<UserPath> {
+	pub fn get_user(&self, inter: &mut Interpreter, from: &UserPath,
+	                env: &mut Environment) -> Option<UserPath> {
 		match *self {
 			Type::UserPath(ref val) => Some(val.clone()),
-			Type::Expression(_) => self.resolve(inter, env).get_user(inter, env),
+			Type::Expression(_) => self.resolve(inter, from, env).get_user(inter, from, env),
 			_ => None
 		}
 	}

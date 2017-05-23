@@ -10,7 +10,7 @@ use std::collections::HashMap;
 pub struct Interpreter {
 	servers: HashMap<String, Server>,
 	pending: Vec<Mail>,
-	users_to_add: Vec<(String, User)>,
+	users_to_add: Vec<(String, String, User)>,
 	servers_to_add: Vec<String>,
 }
 
@@ -27,8 +27,8 @@ impl Interpreter {
 		inter
 	}
 
-	pub fn add_user(&mut self, server: &str, user: &User) {
-		self.users_to_add.push((server.to_string(), user.clone()));
+	pub fn add_user(&mut self, name: &str, server: &str, userdef: &UserDef) {
+		self.users_to_add.push((name.to_string(), server.to_string(), userdef.create_user()));
 	}
 
 	pub fn add_server(&mut self, server: &str) {
@@ -79,9 +79,9 @@ impl Interpreter {
 		}
 		let users = self.users_to_add.split_off(0);
 		for def in users {
-			let mut serv = self.get_server(&def.0).unwrap();
-			let name = def.1.env.path.0.to_string();
-			serv.add_user(name, def.1);
+			let mut serv = self.get_server(&def.1).unwrap();
+			let name = def.0.to_string();
+			serv.add_user(name, def.2);
 		}
 		let mail = self.pending.split_off(0);
 		for m in mail {
@@ -91,7 +91,7 @@ impl Interpreter {
 		return true;
 	}
 
-	pub fn run(&mut self, instructions: &Vec<Instruction>, env: &mut Environment) {
+	pub fn run(&mut self, instructions: &Vec<Instruction>, from: &UserPath, env: &mut Environment) {
 		let mut i = 0;
 		loop {
 			if i >= instructions.len() {
@@ -99,14 +99,14 @@ impl Interpreter {
 			}
 			let inst = &instructions[i];
 			i = i + 1;
-			inst.call(self, env);
+			inst.call(self, from, env);
 		}
 	}
 
 	pub fn execute(&mut self, instructions: &Vec<Instruction>) {
 		self.handle_pending();
-		let mut env = Environment::new_anon();
-		self.run(instructions, &mut env);
+		let mut env = Environment::new();
+		self.run(instructions, &UserPath::new_anon(), &mut env);
 		while self.handle_pending() {}
 	}
 }

@@ -208,8 +208,8 @@ pub fn parse_symbols(symbols: &[SymbolDef]) -> Result<Vec<Instruction>, SyntaxEr
 						_ => return Err(chunk[2].errfactory.gen_error(
 							SyntaxErrorType::BadUserBlock))
 					};
-					let user = User::create_user_internal(&path.0, block);
-					Instruction::CreateUser(path.1.clone(), user)
+					let user = UserDef::create_def_internal(block);
+					Instruction::CreateUser(path.0.clone(), path.1.clone(), user)
 				},
 				Symbol::Identifier(ref name) => {
 					assert!(chunk.len() <= 2);

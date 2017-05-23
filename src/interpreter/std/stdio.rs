@@ -1,4 +1,4 @@
-use user::User;
+use user::*;
 use interpreter::Interpreter;
 use mail::Mail;
 use std::io::{self, BufRead, Write};
@@ -29,6 +29,6 @@ fn func(_: &User, inter: &mut Interpreter, mail: &Mail) {
 	}
 }
 
-pub fn create() -> User {
-	User::create_user_external("io", Box::new(func))
+pub fn create() -> UserDef {
+	UserDef::create_def_external(Box::new(func))
 }

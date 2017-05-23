@@ -2,26 +2,20 @@ use types::Type;
 use std::collections::HashMap;
 use user::UserPath;
 
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 pub struct Environment {
 	pub data: HashMap<String, Type>,
-	pub path: UserPath
 }
 
 impl Environment {
-	pub fn new(username: &str, server: &str) -> Environment {
+	pub fn new() -> Environment {
 		Environment {
-			data: HashMap::new(),
-			path: UserPath(username.to_string(), server.to_string())
+			data: HashMap::new()
 		}
 	}
 
 	pub fn has(&self, key: &str) -> bool {
 		self.data.contains_key(key)
-	}
-
-	pub fn new_anon() -> Environment {
-		Environment::new("Anonymous", "anon")
 	}
 
 	pub fn set(&mut self, key: &str, value: Type) {

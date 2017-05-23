@@ -15,6 +15,16 @@ impl Mail {
 		self.attachments.push(val.to_string())
 	}
 
+	pub fn create(from: UserPath, to: UserPath, subject: &str, message: &str) -> Mail {
+		Mail {
+			from: from,
+			to: to,
+			subject: subject.to_string(),
+			message: message.to_string(),
+			attachments: Vec::new()
+		}
+	}
+
 	pub fn return_mail(&self, inter: &mut Interpreter, subject: &str, message: &str, attachments: Vec<String>) {
 		inter.mail(Mail {
 			from: self.to.clone(),
