@@ -6,12 +6,14 @@ use user::*;
 use environment::Environment;
 mod std;
 use std::collections::HashMap;
+use modifier;
 
 pub struct Interpreter {
 	servers: HashMap<String, Server>,
 	pending: Vec<Mail>,
 	users_to_add: Vec<(String, String, User)>,
 	servers_to_add: Vec<String>,
+	pub modifiers: HashMap<String, Box<modifier::ModifierFunc>>
 }
 
 impl Interpreter {
@@ -21,9 +23,11 @@ impl Interpreter {
 			pending: Vec::new(),
 			users_to_add: Vec::new(),
 			servers_to_add: Vec::new(),
+			modifiers: HashMap::new()
 		};
 
 		std::create_std_lib(&mut inter);
+		modifier::apply_default_mods(&mut inter);
 		inter
 	}
 

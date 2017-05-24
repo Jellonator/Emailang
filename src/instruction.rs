@@ -55,7 +55,6 @@ impl Instruction {
 	pub fn call(&self, inter: &mut Interpreter, from: &UserPath, env: &mut Environment) -> Type {
 		match *self {
 			Instruction::CreateServer(ref name) => {
-				println!("servmake {:?}", name);
 				let servername = name.get_string(inter, from, env).unwrap();
 				inter.add_server(&servername);
 			},

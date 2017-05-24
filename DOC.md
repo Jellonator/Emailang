@@ -27,18 +27,18 @@ will concatenate them as a tuple. E.g., `"a" + ("b", "c")` results
 in `("a", "b", "c")`
 
 ### Environment variable getter.
-`@` - Takes the identifier to the right and retrieves
+`*` - Takes the identifier to the right and retrieves
 the value of the environment variable of that name. If instead of an identifier
 a tuple is given, this operator will return a tuple with all of the values of
-the identifiers in the environment, e.g. `@("message", "subject")` will evaluate
-to `(email message, email subject)`. Note that `@content` and `@"content"` are
-the same, as well as `@(content, subject)` and `@("content", "subject")`. It is
-possible to chain retrieval operators, e.g.
-`foo = bar; bar = "Hello, World!"; ("print", @@foo) > <io@std.com>` will
+the identifiers in the environment, e.g. `*(content, subject)` will evaluate
+to `(email content, email subject)`. It is possible to chain retrieval
+operators, e.g.
+`foo = bar; bar = "Hello, World!"; ("print", **foo) > <io@std.com>` will
 print out `"Hello, World!"`.
 
 ### Indexing
 `[n]` - Can get an element from a tuple, or a character from a string.
+Currently there is no way to assign to an index of a tuple.
 
 ### Slicing
 `[n:m]` - When used on a tuple, it returns a new tuple with elements in
@@ -49,15 +49,11 @@ to m exclusive. Examples: `"hello"[1:4]` returns `"ell"`, and
 ### Assignment
 `=` - Assigns a variable in the user's environment to the value on
 the right hand side. Note that the variable being assigned to should be a
-string or identifier, NOT a retrieval operator, e.g. `@foo = "bar"` might not
+string or identifier, NOT a retrieval operator, e.g. `*foo = "bar"` might not
 work; instead, use `foo = "bar"`. It is, however, possible to use the retrieval
 operator on the left side like this:
-`foo = "Hello!"; bar = "foo"; @bar = "World!";("print", @foo) > <io@std.com>;`,
+`foo = "Hello!"; bar = "foo"; *bar = "World!";("print", *foo) > <io@std.com>;`,
 which will print `"World!"`
-
-### Modifier
-`|` - Takes the value on the left and modifies it based on the value
-to the right. More on modifiers later in this document.
 
 ## User definition
 When defining a user, typically a block is placed after the username that is
@@ -145,10 +141,10 @@ Example:
 !bar;
 !<foo@bar> {
 	"start" {
-		("iterate", "each") + @content + @attachments > <loop@std.com>;
+		("iterate", "each") + *content + *attachments > <loop@std.com>;
 	}
 	"each" {
-		("print", @content) > <io@std.com>;
+		("print", *content) > <io@std.com>;
 	}
 };
 ("start", "A", "B", "C") > <foo@bar>;

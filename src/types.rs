@@ -4,7 +4,7 @@ use interpreter::Interpreter;
 use mail::Draft;
 use environment::Environment;
 use std::str::FromStr;
-use regex;
+use modifier::ModifierFunc;
 
 #[derive(Clone, Debug)]
 pub enum Type {
@@ -50,32 +50,17 @@ impl Type {
 	              env: &mut Environment) -> Option<Type> {
 		let mod_name = self.get_modname(inter, from, env);
 		let mod_args = self.get_modargs(inter, from, env);
-		match mod_name.as_str() {
-			"chars" => { // Turn a string into a tuple of characters
-				assert!(mod_args.len() == 0);
-				Some(Type::Tuple(other.get_string(inter, from, env).unwrap().chars()
-					.map(|v|Type::Text(v.to_string())).collect()))
+		// yet another hack here :(
+		let ptr;
+		match inter.modifiers.get(&mod_name) {
+			Some(func) => {
+				use std::borrow::Borrow;
+				ptr = func.borrow() as *const ModifierFunc;
 			},
-			"merge" => {
-				assert!(mod_args.len() == 0);
-				Some(Type::Text(
-					other.unpack(inter, from, env).iter()
-					.map(|v|v.get_string(inter, from, env).unwrap())
-					.collect::<String>()
-				))
-			},
-			"filter" => {
-				assert!(mod_args.len() == 1);
-				let r = regex::Regex::new(&mod_args[0].get_string(inter, from, env).unwrap()).unwrap();
-				Some(Type::Tuple(
-					other.unpack(inter, from, env).iter()
-					.map(|v|v.get_string(inter, from, env).unwrap())
-					.filter(|v|r.is_match(&v))
-					.map(|v|Type::Text(v))
-					.collect()
-				))
-			},
-			_ => None
+			None => {return None;}
+		}
+		unsafe {
+			(*ptr)(other, inter, from, env, &mod_args)
 		}
 	}
 

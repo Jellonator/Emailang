@@ -1,6 +1,5 @@
 use types::Type;
 use std::collections::HashMap;
-use user::UserPath;
 
 #[derive(Clone, Debug)]
 pub struct Environment {

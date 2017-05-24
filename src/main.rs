@@ -8,6 +8,7 @@ pub mod server;
 pub mod mail;
 pub mod error;
 pub mod environment;
+pub mod modifier;
 extern crate regex;
 
 use std::error::Error;

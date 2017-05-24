@@ -1,0 +1,12 @@
+!factory.com;
+!foo.com;
+
+!<create@factory.com> {
+    "^create$" {
+        !<*message@foo.com>;
+        (iterate, send) + *attachments > <loop@std.com>;
+    };
+    "^send$" {
+        (message, *content) > <>;
+    }
+}
