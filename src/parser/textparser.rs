@@ -153,8 +153,12 @@ pub fn parse_code(code: &[CodeChar]) -> Result<Vec<SymbolDef>, SyntaxError> {
 				let pos = try!(codechars_find(&path, '@').ok_or(SyntaxError::new(
 					c.line, c.column, SyntaxErrorType::MalformedUserpath)));
 				let (a, b) = path.split_at(pos);
-				Symbol::UserPath(UserPath(codechars_to_string(a),
-					codechars_to_string(&b[1..])))
+				// Symbol::UserPath(UserPath(codechars_to_string(a),
+				// 	codechars_to_string(&b[1..])))
+				Symbol::UserPath(
+					symbols::Block(try!(parse_code(&a))),
+					symbols::Block(try!(parse_code(&b[1..])))
+				)
 			},
 			'{' => {
 				let block = take_until_matched(&mut chars, '{', '}', 0);

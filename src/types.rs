@@ -10,7 +10,7 @@ use regex;
 pub enum Type {
 	Null,
 	Text(String),
-	UserPath(UserPath),
+	UserPath(Box<Type>, Box<Type>),
 	Tuple(Vec<Type>),
 	Expression(Box<Instruction>)
 }
@@ -169,7 +169,7 @@ impl Type {
 			Type::Null => "null",
 			Type::Text(_) => "text",
 			Type::Tuple(_) => "tuple",
-			Type::UserPath(_) => "user",
+			Type::UserPath(_, _) => "user",
 			Type::Expression(_) => "expression"
 		}
 	}
@@ -179,7 +179,9 @@ impl Type {
 		match *self {
 			Type::Text(ref val) => Some(val.clone()),
 			Type::Expression(_) => self.resolve(inter, from, env).get_string(inter, from, env),
-			Type::UserPath(ref path) => Some(format!("{}@{}", &path.0, &path.1)),
+			Type::UserPath(ref name, ref server) => Some(
+				format!("{}@{}", name.get_string(inter, from, env).unwrap(),
+				                 server.get_string(inter, from, env).unwrap())),
 			_ => None
 		}
 	}
@@ -232,7 +234,16 @@ impl Type {
 	pub fn get_user(&self, inter: &mut Interpreter, from: &UserPath,
 	                env: &mut Environment) -> Option<UserPath> {
 		match *self {
-			Type::UserPath(ref val) => Some(val.clone()),
+			Type::UserPath(ref name, ref server) => {
+				let a = name.get_string(inter, from, env);
+				let b = server.get_string(inter, from, env);
+				match (a, b) {
+					(Some(a), Some(b)) => {
+						Some(UserPath(a, b))
+					},
+					_ => None
+				}
+			},
 			Type::Expression(_) => self.resolve(inter, from, env).get_user(inter, from, env),
 			_ => None
 		}

@@ -193,31 +193,32 @@ pub fn parse_symbols(symbols: &[SymbolDef]) -> Result<Vec<Instruction>, SyntaxEr
 
 		let inst = if let Symbol::Define = chunk[0].symbol {
 			assert!(chunk.len() >= 2);
-			match chunk[1].symbol {
-				Symbol::UserPath(ref path) => {
+			let ref symbol = chunk[1].symbol;
+			let chunk = &chunk[1..];
+			match *symbol {
+				Symbol::UserPath(ref name, ref server) => {
 					let block = match chunk.len() {
-						2 => Vec::new(),
-						3 => {
-							if let Symbol::CurlyBraced(ref block) = chunk[2].symbol {
+						1 => Vec::new(),
+						2 => {
+							if let Symbol::CurlyBraced(ref block) = chunk[1].symbol {
 								try!(parse_user_block(&block.0))
 							} else {
-								return Err(chunk[2].errfactory.gen_error(
+								return Err(chunk[1].errfactory.gen_error(
 									SyntaxErrorType::BadUserBlock))
 							}
 						},
-						_ => return Err(chunk[2].errfactory.gen_error(
+						_ => return Err(chunk[1].errfactory.gen_error(
 							SyntaxErrorType::BadUserBlock))
 					};
 					let user = UserDef::create_def_internal(block);
-					Instruction::CreateUser(path.0.clone(), path.1.clone(), user)
+					Instruction::CreateUser(
+						try!(parse_type(&name.0)),
+						try!(parse_type(&server.0)),
+						user)
 				},
-				Symbol::Identifier(ref name) => {
-					assert!(chunk.len() <= 2);
-					Instruction::CreateServer(name.clone())
-				},
-				_ => return Err(chunk[1].errfactory.gen_error(
-					SyntaxErrorType::BadDefinition(chunk[1].get_type().ok()
-					.map(|v|v.get_typename().to_string()))))
+				_ => {
+					Instruction::CreateServer(try!(parse_type(&chunk)))
+				}
 			}
 		} else if let Symbol::If = chunk[0].symbol {
 			try!(parse_ifblock(&chunk))

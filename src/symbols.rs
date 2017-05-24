@@ -56,7 +56,7 @@ pub enum Symbol {
 	CurlyBraced(Block),
 	Parenthesis(Block),
 	// Types
-	UserPath(UserPath),
+	UserPath(Block, Block),
 	Identifier(String),
 	Text(String),
 	// Syntax
@@ -132,7 +132,12 @@ impl SymbolDef {
 		match self.symbol {
 			Symbol::Text(ref val) => Ok(Type::Text(val.clone())),
 			Symbol::Identifier(ref val) => Ok(Type::Text(val.clone())),
-			Symbol::UserPath(ref val) => Ok(Type::UserPath(val.clone())),
+			Symbol::UserPath(ref a, ref b) => {
+				Ok(Type::UserPath(
+					Box::new(try!(symbolparser::parse_type(&a.0))),
+					Box::new(try!(symbolparser::parse_type(&b.0)))
+				))
+			},
 			Symbol::Parenthesis(ref val) => {
 				if val.is_comma_delimited() {
 					let mut tuple = Vec::new();
@@ -169,6 +174,7 @@ impl SymbolDef {
 			// Separators
 			// Symbol::Comma      => OperatorType::LeftToRight(2000, None, None),
 			// Operators
+			// Symbol::Define     => OperatorType::LeftToRight(1003, false, true),
 			Symbol::Assign     => OperatorType::LeftToRight(1002, true, true),
 			Symbol::Arrow      => OperatorType::LeftToRight(1001, true, true),
 			Symbol::Addition   => OperatorType::LeftToRight(1000, true, true),

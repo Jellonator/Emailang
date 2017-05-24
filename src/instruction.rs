@@ -39,8 +39,8 @@ impl CondBlock {
 
 #[derive(Clone, Debug)]
 pub enum Instruction {
-	CreateServer(String),
-	CreateUser(String, String, UserDef),
+	CreateServer(Type),
+	CreateUser(Type, Type, UserDef),
 	MailTo(Type, Type),
 	Concatenate(Type, Type),
 	GetEnv(Type),
@@ -55,10 +55,14 @@ impl Instruction {
 	pub fn call(&self, inter: &mut Interpreter, from: &UserPath, env: &mut Environment) -> Type {
 		match *self {
 			Instruction::CreateServer(ref name) => {
-				inter.add_server(name);
+				println!("servmake {:?}", name);
+				let servername = name.get_string(inter, from, env).unwrap();
+				inter.add_server(&servername);
 			},
 			Instruction::CreateUser(ref name, ref server, ref userdef) => {
-				inter.add_user(name, server, userdef);
+				let username = name.get_string(inter, from, env).unwrap();
+				let servername = server.get_string(inter, from, env).unwrap();
+				inter.add_user(&username, &servername, userdef);
 			},
 			Instruction::MailTo(ref draft, ref name) => {
 				let d = draft.get_draft(inter, from, env).unwrap();

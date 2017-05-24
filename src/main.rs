@@ -37,16 +37,16 @@ fn run(fname: &str) {
 			println!("{}", err);
 			if let Some(ref pos) = err.pos {
 				if let Some(ref s) = contents.lines().nth(pos.0 - 1) {
-					println!("{}", s);
-					let mut column = pos.1;
-					for _ in s.chars().take(column).filter(|c|*c=='\t') {
-						print!("\t");
-						column -= 1;
-					}
-					if column > 0 {
-						print!("{}", std::iter::repeat("-").take(column).collect::<String>());
-					}
-					println!("^");
+					// let new_s = s.replace('\t', "    ");
+					let ltrim = s.trim_left();
+					let lspace = &s[0..ltrim.len()];
+					let actual_lspace = lspace.replace('\t', "    ");
+					let dstr = &s[0..pos.1];
+					let dashed_lspace = dstr.chars()
+					                        .map(|c|if c == '\t' {"----"} else {"-"})
+					                        .collect::<String>();
+					println!("{}{}", actual_lspace, ltrim);
+					println!("{}^", dashed_lspace);
 				}
 			}
 			return;

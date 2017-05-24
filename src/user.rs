@@ -33,6 +33,13 @@ impl UserPath {
 			"anon".to_string()
 		)
 	}
+	/// Create a type from this UserPath
+	pub fn create_type(&self) -> Type {
+		Type::UserPath (
+			Box::new(Type::Text(self.0.to_string())),
+			Box::new(Type::Text(self.1.to_string()))
+		)
+	}
 }
 
 #[derive(Clone)]
@@ -91,8 +98,8 @@ impl User {
 	pub fn send(&mut self, mut inter: &mut Interpreter, mail: &Mail) {
 		self.env.set("subject", Type::Text(mail.subject.clone()));
 		self.env.set("content", Type::Text(mail.message.clone()));
-		self.env.set("sender", Type::UserPath(mail.from.clone()));
-		self.env.set("self", Type::UserPath(mail.to.clone()));
+		self.env.set("sender", mail.from.create_type());
+		self.env.set("self", mail.to.create_type());
 		self.env.set("attachments", Type::Tuple(mail.attachments
 			.iter()
 			.map(|v|Type::Text(v.clone()))
