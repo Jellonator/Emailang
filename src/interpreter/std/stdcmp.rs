@@ -2,7 +2,7 @@ use user::*;
 use interpreter::Interpreter;
 use mail::Mail;
 
-fn func(user: &User, inter: &mut Interpreter, mail: &Mail) {
+fn func(_: &User, inter: &mut Interpreter, mail: &Mail) {
 	match mail.subject.as_ref() {
 		"eq" => {
 			inter.mail(Mail::create(mail.to.clone(), mail.from.clone(), &mail.message,

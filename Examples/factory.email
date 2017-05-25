@@ -3,10 +3,18 @@
 
 !<create@factory.com> {
     "^create$" {
-        !<*message@foo.com>;
-        (iterate, send) + *attachments > <loop@std.com>;
+        !<*content@foo.com>{
+            "^dothing$" {
+                (println, *self, *content) > <io@std.com>;
+            };
+        };
+        (iterate, send + *content) + *attachments > <loop@std.com>;
     };
-    "^send$" {
-        (message, *content) > <>;
-    }
-}
+    "^send.+$" {
+        (dothing, *content) > <*subject[4:]@foo.com>;
+    };
+};
+
+(create, apple, eat) > <create@factory.com>;
+(create, banana, peel, eat) > <create@factory.com>;
+(create, bread, toast, butter, eat) > <create@factory.com>;

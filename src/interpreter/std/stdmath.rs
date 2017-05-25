@@ -3,7 +3,7 @@ use interpreter::Interpreter;
 use mail::Mail;
 use std::char;
 
-fn func(user: &User, inter: &mut Interpreter, mail: &Mail) {
+fn func(_: &User, inter: &mut Interpreter, mail: &Mail) {
 	match mail.subject.as_ref() {
 		"add" => {
 			let mut is_okay = true;

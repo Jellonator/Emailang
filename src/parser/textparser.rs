@@ -1,6 +1,5 @@
 use symbols;
 use symbols::{Symbol, SymbolDef};
-use user::*;
 use std::slice::Iter;
 use error::{SyntaxErrorFactory, SyntaxError, SyntaxErrorType};
 use std::fmt;

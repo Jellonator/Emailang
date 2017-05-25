@@ -1,4 +1,3 @@
-use user::UserPath;
 use types::Type;
 use error;
 use parser;
